@@ -46,13 +46,8 @@ input {
 }
 
 .admin-list-item {
-  display: grid;
-  grid-template-columns: 32px 1fr;
-  gap: 10px;
-  align-items: center;
-  padding: 10px;
+  padding: 8px;
   border-radius: 8px;
-  cursor: grab;
   border: 1px solid transparent;
 }
 
@@ -65,13 +60,42 @@ input {
   background: #f0f0f0;
 }
 
-.admin-list-item:active {
-  cursor: grabbing;
+.admin-list-header {
+  display: grid;
+  grid-template-columns: 24px 44px 1fr auto;
+  gap: 8px;
+  align-items: center;
 }
 
-.admin-list-index {
+.admin-drag-handle {
+  cursor: grab;
+  font-size: 18px;
+  user-select: none;
+}
+
+.admin-accordion-toggle,
+.admin-select-level,
+.admin-move-up,
+.admin-move-down {
+  width: auto;
+  padding: 6px 10px;
+  margin: 0;
+}
+
+.admin-list-controls {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.admin-list-title {
   font-weight: 600;
-  text-align: center;
+}
+
+.admin-accordion-body {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed #ddd;
 }
 
 .actionable {

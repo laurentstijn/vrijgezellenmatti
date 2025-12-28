@@ -5,6 +5,7 @@ let adminActive = false;
 let testMode = false;
 let driveToken = "";
 let tokenClient = null;
+let openLevelIndex = null;
 
 function initAdmin() {
   const params = new URLSearchParams(window.location.search);
@@ -32,78 +33,22 @@ function initAdmin() {
     <div id="adminOrderStatus"></div>
 
     <div class="admin-actions">
-      <button onclick="forceCorrect()">✅ Forceer goed</button>
       <button onclick="toggleTestMode(event)">🧪 Testmodus: UIT</button>
+    </div>
+
+    <div class="admin-actions">
+      <button onclick="addLevel()">➕ Nieuwe vraag</button>
     </div>
 
     <h3>Vragen</h3>
     <div id="adminLevelList" class="admin-list"></div>
-    <div class="admin-actions">
-      <button onclick="addLevel()">➕ Nieuw level</button>
-      <button onclick="deleteLevel()">🗑️ Verwijder level</button>
-      <button onclick="moveLevelUp()">⬆️ Verplaats omhoog</button>
-      <button onclick="moveLevelDown()">⬇️ Verplaats omlaag</button>
-    </div>
 
     <hr>
 
-    <h3>Vraag bewerken</h3>
-    <label>Vraag</label>
-    <input id="adminQuestion" type="text">
-
-    <label>Aankomst bericht</label>
-    <input id="adminArriveMessage" type="text">
-
-    <label>
-      <input id="adminVibrateOnArrive" type="checkbox">
-      Trillen bij aankomst
-    </label>
-
-    <label>Notificatie bericht</label>
-    <input id="adminNotifyMessage" type="text">
-
-    <label>
-      <input id="adminNotifyOnArrive" type="checkbox">
-      Stuur notificatie bij aankomst
-    </label>
-
-    <label>Juiste antwoord</label>
-    <input id="adminAnswer" type="text">
-
-    <label>Type</label>
-    <select id="adminType">
-      <option value="text">Tekst</option>
-      <option value="number">Nummer</option>
-      <option value="photo">Foto</option>
-    </select>
-
-    <label>Vraag media</label>
-    <select id="adminQuestionType">
-      <option value="none">Geen</option>
-      <option value="photo">Foto</option>
-      <option value="video">Video</option>
-    </select>
-
-    <label>Google Drive</label>
+    <h3>Google Drive</h3>
     <button id="adminDriveLogin" type="button">🔐 Login Google Drive</button>
     <div id="adminDriveStatus">Niet verbonden</div>
-
-    <label>Media upload (Drive)</label>
-    <input id="adminMediaFile" type="file">
-    <div id="adminMediaInfo"></div>
-
-    <label>Latitude</label>
-    <input id="adminLat" type="number" step="any">
-
-    <label>Longitude</label>
-    <input id="adminLng" type="number" step="any">
-
-    <button onclick="useCurrentLocation()">📍 Gebruik huidige locatie</button>
-    <button onclick="saveLevel()">💾 Opslaan in Firebase</button>
   `;
-
-  const questionTypeSelect = document.getElementById("adminQuestionType");
-  questionTypeSelect.addEventListener("change", updateMediaAccept);
 
   const driveLoginBtn = document.getElementById("adminDriveLogin");
   driveLoginBtn.addEventListener("click", requestDriveAuth);
@@ -115,12 +60,48 @@ function initAdmin() {
       if (!item) return;
       const idx = parseInt(item.dataset.index, 10);
       if (Number.isNaN(idx)) return;
-      currentLevel = idx;
-      loadAdminFields();
+
+      if (event.target.closest(".admin-delete-level")) {
+        deleteLevelByIndex(idx);
+        return;
+      }
+      if (event.target.closest(".admin-move-up")) {
+        if (idx > 0) reorderLevels(idx, idx - 1);
+        return;
+      }
+      if (event.target.closest(".admin-move-down")) {
+        if (idx < levels.length - 1) reorderLevels(idx, idx + 1);
+        return;
+      }
+      if (event.target.closest(".admin-save-level")) {
+        saveLevelByIndex(idx);
+        return;
+      }
+      if (event.target.closest(".admin-use-location")) {
+        useCurrentLocationForIndex(idx);
+        return;
+      }
+      if (event.target.closest(".admin-select-level")) {
+        setCurrentLevel(idx);
+        return;
+      }
+      if (event.target.closest(".admin-accordion-toggle") || event.target.closest(".admin-list-title")) {
+        toggleLevelOpen(idx);
+        return;
+      }
+    });
+
+    listEl.addEventListener("change", event => {
+      if (!event.target.matches("[data-field='questionType']")) return;
+      const item = event.target.closest(".admin-list-item");
+      if (!item) return;
+      updateMediaAcceptForItem(item);
     });
 
     listEl.addEventListener("dragstart", event => {
-      const item = event.target.closest(".admin-list-item");
+      const handle = event.target.closest(".admin-drag-handle");
+      if (!handle) return;
+      const item = handle.closest(".admin-list-item");
       if (!item) return;
       event.dataTransfer.effectAllowed = "move";
       event.dataTransfer.setData("text/plain", item.dataset.index);
@@ -192,39 +173,8 @@ function requestDriveAuth() {
   tokenClient.requestAccessToken({ prompt: "consent" });
 }
 
-function updateMediaAccept() {
-  const questionType = document.getElementById("adminQuestionType").value;
-  const mediaInput = document.getElementById("adminMediaFile");
-  mediaInput.value = "";
-
-  if (questionType === "photo") {
-    mediaInput.accept = "image/*";
-  } else if (questionType === "video") {
-    mediaInput.accept = "video/*";
-  } else {
-    mediaInput.accept = "";
-  }
-}
-
 function loadAdminFields() {
   if (!adminActive) return;
-  const level = levels[currentLevel];
-  if (!level) return;
-
-  document.getElementById("adminQuestion").value = level.questionText || level.question || "";
-  document.getElementById("adminArriveMessage").value = level.arriveMessage || "";
-  document.getElementById("adminVibrateOnArrive").checked = !!level.vibrateOnArrive;
-  document.getElementById("adminNotifyMessage").value = level.notifyMessage || "";
-  document.getElementById("adminNotifyOnArrive").checked = !!level.notifyOnArrive;
-  document.getElementById("adminAnswer").value = level.answer || "";
-  document.getElementById("adminType").value = level.type || "text";
-  document.getElementById("adminQuestionType").value = level.questionType || "none";
-  document.getElementById("adminLat").value = level.lat || "";
-  document.getElementById("adminLng").value = level.lng || "";
-
-  const mediaInfo = document.getElementById("adminMediaInfo");
-  mediaInfo.innerText = level.mediaUrl ? `Huidige media: ${level.mediaUrl}` : "Geen media";
-  updateMediaAccept();
 
   const levelIndexEl = document.getElementById("adminLevelIndex");
   if (levelIndexEl) {
@@ -237,6 +187,21 @@ function loadAdminFields() {
   }
 
   renderLevelList();
+}
+
+function updateMediaAcceptForItem(item) {
+  const questionType = item.querySelector("[data-field='questionType']")?.value;
+  const mediaInput = item.querySelector(".admin-media-file");
+  if (!mediaInput) return;
+  mediaInput.value = "";
+
+  if (questionType === "photo") {
+    mediaInput.accept = "image/*";
+  } else if (questionType === "video") {
+    mediaInput.accept = "video/*";
+  } else {
+    mediaInput.accept = "";
+  }
 }
 
 function escapeHtml(value) {
@@ -256,10 +221,84 @@ function renderLevelList() {
     const title = (level.questionText || level.question || "Onbekende vraag").trim();
     const shortTitle = title.length > 60 ? `${title.slice(0, 60)}…` : title;
     const activeClass = index === currentLevel ? "active" : "";
+    const isOpen = index === openLevelIndex;
+    const openClass = isOpen ? "open" : "";
+    const bodyClass = isOpen ? "" : "hidden";
+    const type = level.type || "text";
+    const questionType = level.questionType || "none";
+    const arriveMessage = level.arriveMessage || "";
+    const notifyMessage = level.notifyMessage || "";
+    const mediaInfo = level.mediaUrl ? `Huidige media: ${level.mediaUrl}` : "Geen media";
+    const mediaAccept = questionType === "photo"
+      ? "image/*"
+      : questionType === "video"
+        ? "video/*"
+        : "";
     return `
-      <div class="admin-list-item ${activeClass}" draggable="true" data-index="${index}">
-        <span class="admin-list-index">${index + 1}</span>
-        <span class="admin-list-title">${escapeHtml(shortTitle)}</span>
+      <div class="admin-list-item ${activeClass} ${openClass}" data-index="${index}">
+        <div class="admin-list-header">
+          <span class="admin-drag-handle" draggable="true" aria-label="Sleep om te verplaatsen">≡</span>
+          <button class="admin-accordion-toggle" type="button">#${index + 1}</button>
+          <span class="admin-list-title">${escapeHtml(shortTitle)}</span>
+          <div class="admin-list-controls">
+            <button class="admin-move-up" type="button">⬆️</button>
+            <button class="admin-move-down" type="button">⬇️</button>
+            <button class="admin-select-level" type="button">Selecteer</button>
+          </div>
+        </div>
+        <div class="admin-accordion-body ${bodyClass}">
+          <label>Vraag</label>
+          <input data-field="questionText" type="text" value="${escapeHtml(level.questionText || level.question || "")}">
+
+          <label>Aankomst bericht</label>
+          <input data-field="arriveMessage" type="text" value="${escapeHtml(arriveMessage)}">
+
+          <label>
+            <input data-field="vibrateOnArrive" type="checkbox" ${level.vibrateOnArrive ? "checked" : ""}>
+            Trillen bij aankomst
+          </label>
+
+          <label>Notificatie bericht</label>
+          <input data-field="notifyMessage" type="text" value="${escapeHtml(notifyMessage)}">
+
+          <label>
+            <input data-field="notifyOnArrive" type="checkbox" ${level.notifyOnArrive ? "checked" : ""}>
+            Stuur notificatie bij aankomst
+          </label>
+
+          <label>Juiste antwoord</label>
+          <input data-field="answer" type="text" value="${escapeHtml(level.answer || "")}">
+
+          <label>Type</label>
+          <select data-field="type">
+            <option value="text" ${type === "text" ? "selected" : ""}>Tekst</option>
+            <option value="number" ${type === "number" ? "selected" : ""}>Nummer</option>
+            <option value="photo" ${type === "photo" ? "selected" : ""}>Foto</option>
+          </select>
+
+          <label>Vraag media</label>
+          <select data-field="questionType">
+            <option value="none" ${questionType === "none" || questionType === "" ? "selected" : ""}>Geen</option>
+            <option value="photo" ${questionType === "photo" ? "selected" : ""}>Foto</option>
+            <option value="video" ${questionType === "video" ? "selected" : ""}>Video</option>
+          </select>
+
+          <label>Media upload (Drive)</label>
+          <input class="admin-media-file" type="file" ${mediaAccept ? `accept="${mediaAccept}"` : ""}>
+          <div class="admin-media-info">${escapeHtml(mediaInfo)}</div>
+
+          <label>Latitude</label>
+          <input data-field="lat" type="number" step="any" value="${escapeHtml(level.lat ?? "")}">
+
+          <label>Longitude</label>
+          <input data-field="lng" type="number" step="any" value="${escapeHtml(level.lng ?? "")}">
+
+          <div class="admin-actions">
+            <button class="admin-use-location" type="button">📍 Gebruik huidige locatie</button>
+            <button class="admin-save-level" type="button">💾 Opslaan</button>
+            <button class="admin-delete-level" type="button">🗑️ Verwijder</button>
+          </div>
+        </div>
       </div>
     `;
   }).join("");
@@ -346,26 +385,40 @@ async function uploadToDrive(file, questionType) {
   return driveMediaUrl(id, isImage);
 }
 
-async function saveLevel() {
-  const q = document.getElementById("adminQuestion").value.trim();
-  const arriveMessage = document.getElementById("adminArriveMessage").value.trim();
-  const vibrateOnArrive = document.getElementById("adminVibrateOnArrive").checked;
-  const notifyMessage = document.getElementById("adminNotifyMessage").value.trim();
-  const notifyOnArrive = document.getElementById("adminNotifyOnArrive").checked;
-  const a = document.getElementById("adminAnswer").value.trim();
-  const t = document.getElementById("adminType").value;
-  const qt = document.getElementById("adminQuestionType").value;
-  const mediaInput = document.getElementById("adminMediaFile");
-  const lat = parseFloat(document.getElementById("adminLat").value);
-  const lng = parseFloat(document.getElementById("adminLng").value);
+function setCurrentLevel(index) {
+  currentLevel = index;
+  loadAdminFields();
+}
 
-  if (!q || isNaN(lat) || isNaN(lng)) {
+function toggleLevelOpen(index) {
+  openLevelIndex = openLevelIndex === index ? null : index;
+  setCurrentLevel(index);
+}
+
+async function saveLevelByIndex(index) {
+  const listEl = document.getElementById("adminLevelList");
+  const item = listEl?.querySelector(`.admin-list-item[data-index="${index}"]`);
+  if (!item) return;
+
+  const q = item.querySelector("[data-field='questionText']")?.value.trim() || "";
+  const arriveMessage = item.querySelector("[data-field='arriveMessage']")?.value.trim() || "";
+  const vibrateOnArrive = !!item.querySelector("[data-field='vibrateOnArrive']")?.checked;
+  const notifyMessage = item.querySelector("[data-field='notifyMessage']")?.value.trim() || "";
+  const notifyOnArrive = !!item.querySelector("[data-field='notifyOnArrive']")?.checked;
+  const a = item.querySelector("[data-field='answer']")?.value.trim() || "";
+  const t = item.querySelector("[data-field='type']")?.value || "text";
+  const qt = item.querySelector("[data-field='questionType']")?.value || "none";
+  const mediaInput = item.querySelector(".admin-media-file");
+  const lat = parseFloat(item.querySelector("[data-field='lat']")?.value || "");
+  const lng = parseFloat(item.querySelector("[data-field='lng']")?.value || "");
+
+  if (!q || Number.isNaN(lat) || Number.isNaN(lng)) {
     alert("❌ Vraag + geldige locatie verplicht");
     return;
   }
 
-  let mediaUrl = levels[currentLevel]?.mediaUrl || "";
-  if (qt !== "none" && mediaInput.files && mediaInput.files.length > 0) {
+  let mediaUrl = levels[index]?.mediaUrl || "";
+  if (qt !== "none" && mediaInput?.files && mediaInput.files.length > 0) {
     const file = mediaInput.files[0];
     try {
       mediaUrl = await uploadToDrive(file, qt);
@@ -375,8 +428,8 @@ async function saveLevel() {
     }
   }
 
-  levels[currentLevel] = {
-    ...levels[currentLevel],
+  levels[index] = {
+    ...levels[index],
     questionText: q,
     arriveMessage,
     vibrateOnArrive,
@@ -415,11 +468,7 @@ function prevLevel() {
   }
 }
 
-function forceCorrect() {
-  submitAnswer(true);
-}
-
-function useCurrentLocation() {
+function useCurrentLocationForIndex(index) {
   if (!navigator.geolocation) {
     alert("❌ GPS niet ondersteund");
     return;
@@ -430,8 +479,13 @@ function useCurrentLocation() {
       const lat = pos.coords.latitude;
       const lng = pos.coords.longitude;
 
-      document.getElementById("adminLat").value = lat.toFixed(6);
-      document.getElementById("adminLng").value = lng.toFixed(6);
+      const listEl = document.getElementById("adminLevelList");
+      const item = listEl?.querySelector(`.admin-list-item[data-index="${index}"]`);
+      if (!item) return;
+      const latEl = item.querySelector("[data-field='lat']");
+      const lngEl = item.querySelector("[data-field='lng']");
+      if (latEl) latEl.value = lat.toFixed(6);
+      if (lngEl) lngEl.value = lng.toFixed(6);
 
       alert("📍 Huidige locatie ingevuld");
     },
@@ -465,6 +519,7 @@ async function addLevel() {
 
   levels.splice(currentLevel + 1, 0, newLevel);
   currentLevel++;
+  openLevelIndex = currentLevel;
 
   await db.collection("games").doc("default").set(
     { levels },
@@ -478,7 +533,7 @@ async function addLevel() {
   alert("➕ Nieuw level toegevoegd");
 }
 
-async function deleteLevel() {
+async function deleteLevelByIndex(index) {
   if (!adminActive) return;
 
   if (levels.length <= 1) {
@@ -488,10 +543,13 @@ async function deleteLevel() {
 
   if (!confirm("Dit level definitief verwijderen?")) return;
 
-  levels.splice(currentLevel, 1);
+  levels.splice(index, 1);
 
-  if (currentLevel >= levels.length) {
-    currentLevel = levels.length - 1;
+  if (currentLevel >= levels.length) currentLevel = levels.length - 1;
+  if (openLevelIndex === index) {
+    openLevelIndex = null;
+  } else if (openLevelIndex !== null && openLevelIndex > index) {
+    openLevelIndex -= 1;
   }
 
   await db.collection("games").doc("default").set(
@@ -516,6 +574,16 @@ async function reorderLevels(from, to) {
     currentLevel -= 1;
   } else if (from > currentLevel && to <= currentLevel) {
     currentLevel += 1;
+  }
+
+  if (openLevelIndex !== null) {
+    if (openLevelIndex === from) {
+      openLevelIndex = to;
+    } else if (from < openLevelIndex && to >= openLevelIndex) {
+      openLevelIndex -= 1;
+    } else if (from > openLevelIndex && to <= openLevelIndex) {
+      openLevelIndex += 1;
+    }
   }
 
   await db.collection("games").doc("default").set(

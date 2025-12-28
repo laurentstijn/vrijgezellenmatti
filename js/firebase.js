@@ -13,12 +13,15 @@ const firebaseConfig = {
 // ================================
 // Firebase init
 // ================================
-firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-db.settings({
-  experimentalForceLongPolling: true,
-  useFetchStreams: false
-});
+db.settings(
+  {
+    experimentalForceLongPolling: true,
+    useFetchStreams: false
+  },
+  { merge: true }
+);
 
+console.log("🔥 Firestore ingesteld op polling-modus (Safari safe)");
 console.log("🔥 Firebase correct geïnitialiseerd");

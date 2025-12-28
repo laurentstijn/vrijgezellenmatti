@@ -1,5 +1,6 @@
 const ADMIN_PIN = "1234";
 let adminActive = false;
+let testMode = false;
 
 function initAdmin() {
   const params = new URLSearchParams(window.location.search);
@@ -27,7 +28,9 @@ function initAdmin() {
     <button onclick="prevLevel()">⬅ Vorige</button>
     <button onclick="nextLevel()">➡ Volgende</button>
     <button onclick="forceCorrect()">✅ Forceer goed</button>
-    
+
+    <button onclick="toggleTestMode()">🧪 Testmodus: UIT</button>
+
     <hr>
     
     <button onclick="addLevel()">➕ Nieuw level</button>
@@ -206,3 +209,17 @@ async function deleteLevel() {
   alert("🗑️ Level verwijderd");
 }
 
+function toggleTestMode() {
+  testMode = !testMode;
+
+  const btn = event.target;
+  btn.innerText = testMode
+    ? "🧪 Testmodus: AAN"
+    : "🧪 Testmodus: UIT";
+
+  if (testMode) {
+    statusEl.innerText = "🧪 Testmodus actief (GPS uit)";
+    questionShown = false;
+    showQuestion(levels[currentLevel]);
+  }
+}

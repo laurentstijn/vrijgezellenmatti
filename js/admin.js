@@ -140,3 +140,64 @@ function useCurrentLocation() {
     }
   );
 }
+
+async function addLevel() {
+  if (!adminActive) return;
+
+  const base = levels[currentLevel] || {
+    lat: 0,
+    lng: 0,
+    type: "text",
+    question: "Nieuwe vraag",
+    answer: "",
+    edit: true
+  };
+
+  const newLevel = {
+    ...base,
+    question: "Nieuwe vraag",
+    answer: "",
+    edit: true
+  };
+
+  levels.splice(currentLevel + 1, 0, newLevel);
+  currentLevel++;
+
+  await db.collection("games").doc("default").set(
+    { levels },
+    { merge: true }
+  );
+
+  questionShown = false;
+  loadAdminFields();
+
+  alert("➕ Nieuw level toegevoegd");
+}
+
+async function deleteLevel() {
+  if (!adminActive) return;
+
+  if (levels.length <= 1) {
+    alert("❌ Minstens 1 level vereist");
+    return;
+  }
+
+  if (!confirm("Dit level definitief verwijderen?")) return;
+
+  levels.splice(currentLevel, 1);
+
+  if (currentLevel >= levels.length) {
+    currentLevel = levels.length - 1;
+  }
+
+  await db.collection("games").doc("default").set(
+    { levels },
+    { merge: true }
+  );
+
+  questionShown = false;
+  loadAdminFields();
+
+  alert("🗑️ Level verwijderd");
+}
+

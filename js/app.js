@@ -169,3 +169,6 @@ photoInput.addEventListener("change", () => {
   alert("📸 Foto opgeslagen!");
   submitAnswer();
 });
+
+initAdmin();
+

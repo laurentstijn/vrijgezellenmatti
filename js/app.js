@@ -1,4 +1,5 @@
 //alert("APP.JS WORDT NU GELADEN");
+alert("NIEUWE LEVELS.JS");
 // ================================
 // App state
 // ================================

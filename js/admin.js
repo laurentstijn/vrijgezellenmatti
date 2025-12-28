@@ -44,6 +44,7 @@ function initAdmin() {
     <label>Longitude</label>
     <input id="adminLng" type="number" step="any">
 
+    <button onclick="useCurrentLocation()">📍 Gebruik huidige locatie</button>
     <button onclick="saveLevel()">💾 Opslaan in Firebase</button>
   `;
 
@@ -109,4 +110,29 @@ function prevLevel() {
 
 function forceCorrect() {
   submitAnswer(true);
+}
+
+function useCurrentLocation() {
+  if (!navigator.geolocation) {
+    alert("❌ GPS niet ondersteund");
+    return;
+  }
+
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      const lat = pos.coords.latitude;
+      const lng = pos.coords.longitude;
+
+      document.getElementById("adminLat").value = lat.toFixed(6);
+      document.getElementById("adminLng").value = lng.toFixed(6);
+
+      alert("📍 Huidige locatie ingevuld");
+    },
+    err => {
+      alert("❌ Kon locatie niet ophalen: " + err.message);
+    },
+    {
+      enableHighAccuracy: true
+    }
+  );
 }

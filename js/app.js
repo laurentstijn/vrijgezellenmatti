@@ -1,6 +1,7 @@
 let currentLevel = 0;
 let questionShown = false;
 let watchId = null;
+let lastDistance = Infinity;
 
 const questionMedia = document.getElementById("questionMedia");
 const statusEl = document.getElementById("status");
@@ -54,6 +55,7 @@ function onLocation(pos) {
     level.lat,
     level.lng
   );
+  lastDistance = d;
 
   if (d <= RADIUS_METERS || testMode) {
     statusEl.innerText = "📍 Locatie bereikt!";
@@ -61,6 +63,9 @@ function onLocation(pos) {
   } else {
     questionShown = false;
     statusEl.innerText = `Nog ${Math.round(d)} meter…`;
+    questionBox.classList.add("hidden");
+    questionMedia.classList.add("hidden");
+    questionMedia.innerHTML = "";
   }
 }
 
@@ -136,6 +141,13 @@ function showQuestion(level) {
 }
 
 function submitAnswer(force = false) {
+  if (!force && !(typeof testMode !== "undefined" && testMode)) {
+    if (lastDistance > RADIUS_METERS) {
+      alert("Je bent nog niet op de locatie");
+      return;
+    }
+  }
+
   const level = levels[currentLevel];
 
   if (level.type === "photo" && !force) {

@@ -3,7 +3,9 @@ let questionShown = false;
 let watchId = null;
 let lastDistance = Infinity;
 const notifiedLevels = new Set();
+const notifiedNotificationLevels = new Set();
 let pendingLevel = null;
+let pendingNotificationLevelIndex = null;
 
 const questionMedia = document.getElementById("questionMedia");
 const statusEl = document.getElementById("status");
@@ -12,6 +14,7 @@ const questionEl = document.getElementById("question");
 const answerInput = document.getElementById("answer");
 const photoInput = document.getElementById("photoInput");
 const submitBtn = document.getElementById("submitBtn");
+const enableNotificationsBtn = document.getElementById("enableNotifications");
 
 statusEl.addEventListener("click", () => {
   if (!pendingLevel) return;
@@ -19,6 +22,20 @@ statusEl.addEventListener("click", () => {
   pendingLevel = null;
   statusEl.classList.remove("actionable");
 });
+
+if (enableNotificationsBtn) {
+  enableNotificationsBtn.addEventListener("click", async () => {
+    if (!("Notification" in window)) return;
+    try {
+      const result = await Notification.requestPermission();
+      if (result === "granted") {
+        enableNotificationsBtn.classList.add("hidden");
+      }
+    } catch (_) {
+      // Ignore permission errors
+    }
+  });
+}
 
 submitBtn.addEventListener("click", () => submitAnswer(false));
 photoInput.addEventListener("change", () => submitAnswer(false));
@@ -29,6 +46,56 @@ function registerServiceWorker() {
     navigator.serviceWorker.register("./sw.js").catch(err => {
       console.warn("Service worker registratie mislukt:", err);
     });
+  });
+}
+
+function updateNotificationUI() {
+  if (!enableNotificationsBtn) return;
+  if (!("Notification" in window)) {
+    enableNotificationsBtn.classList.add("hidden");
+    return;
+  }
+  if (Notification.permission === "granted") {
+    enableNotificationsBtn.classList.add("hidden");
+  } else {
+    enableNotificationsBtn.classList.remove("hidden");
+  }
+}
+
+async function sendArrivalNotification(level, levelIndex) {
+  if (!("Notification" in window)) return false;
+  if (Notification.permission !== "granted") return false;
+  if (!("serviceWorker" in navigator)) return false;
+
+  const body = level.notifyMessage?.trim() || "Tijd voor een vraagje";
+  const reg = await navigator.serviceWorker.ready;
+  await reg.showNotification("Vrijgezellen Matti", {
+    body,
+    tag: `level-${levelIndex}`,
+    data: { levelIndex }
+  });
+  return true;
+}
+
+function handleNotificationArrival(levelIndex) {
+  if (typeof levelIndex !== "number" || !levels || !levels[levelIndex]) return;
+  pendingNotificationLevelIndex = levelIndex;
+
+  if (lastDistance <= RADIUS_METERS || (typeof testMode !== "undefined" && testMode)) {
+    showQuestion(levels[levelIndex]);
+    pendingNotificationLevelIndex = null;
+  } else {
+    pendingLevel = levels[levelIndex];
+    statusEl.innerText = "📍 Locatie bereikt! (tik om verder te gaan)";
+    statusEl.classList.add("actionable");
+  }
+}
+
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.addEventListener("message", event => {
+    if (event?.data?.type === "arrival") {
+      handleNotificationArrival(event.data.levelIndex);
+    }
   });
 }
 
@@ -73,6 +140,15 @@ function onLocation(pos) {
       return;
     }
 
+    if (
+      pendingNotificationLevelIndex !== null &&
+      pendingNotificationLevelIndex === currentLevel
+    ) {
+      pendingNotificationLevelIndex = null;
+      showQuestion(level);
+      return;
+    }
+
     const arriveMessage = level.arriveMessage ? level.arriveMessage.trim() : "";
     if (!notifiedLevels.has(currentLevel)) {
       statusEl.innerText = arriveMessage
@@ -87,6 +163,11 @@ function onLocation(pos) {
     }
     pendingLevel = level;
     statusEl.classList.add("actionable");
+
+    if (level.notifyOnArrive && !notifiedNotificationLevels.has(currentLevel)) {
+      sendArrivalNotification(level, currentLevel).catch(() => {});
+      notifiedNotificationLevels.add(currentLevel);
+    }
   } else {
     questionShown = false;
     pendingLevel = null;
@@ -211,9 +292,18 @@ function submitAnswer(force = false) {
 /* ================= INIT ================= */
 async function init() {
   registerServiceWorker();
+  updateNotificationUI();
   await loadLevels();
   initAdmin();
   startGPS();
+
+  const params = new URLSearchParams(window.location.search);
+  if (params.get("notify") === "1") {
+    const levelIndex = parseInt(params.get("level") || "", 10);
+    if (!Number.isNaN(levelIndex)) {
+      pendingNotificationLevelIndex = levelIndex;
+    }
+  }
 }
 
 init();

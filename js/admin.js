@@ -39,6 +39,8 @@ function initAdmin() {
     
     <button onclick="addLevel()">➕ Nieuw level</button>
     <button onclick="deleteLevel()">🗑️ Verwijder level</button>
+    <button onclick="moveLevelUp()">⬆️ Verplaats omhoog</button>
+    <button onclick="moveLevelDown()">⬇️ Verplaats omlaag</button>
 
 
     <label>Vraag</label>
@@ -50,6 +52,14 @@ function initAdmin() {
     <label>
       <input id="adminVibrateOnArrive" type="checkbox">
       Trillen bij aankomst
+    </label>
+
+    <label>Notificatie bericht</label>
+    <input id="adminNotifyMessage" type="text">
+
+    <label>
+      <input id="adminNotifyOnArrive" type="checkbox">
+      Stuur notificatie bij aankomst
     </label>
 
     <label>Juiste antwoord</label>
@@ -160,6 +170,8 @@ function loadAdminFields() {
   document.getElementById("adminQuestion").value = level.questionText || level.question || "";
   document.getElementById("adminArriveMessage").value = level.arriveMessage || "";
   document.getElementById("adminVibrateOnArrive").checked = !!level.vibrateOnArrive;
+  document.getElementById("adminNotifyMessage").value = level.notifyMessage || "";
+  document.getElementById("adminNotifyOnArrive").checked = !!level.notifyOnArrive;
   document.getElementById("adminAnswer").value = level.answer || "";
   document.getElementById("adminType").value = level.type || "text";
   document.getElementById("adminQuestionType").value = level.questionType || "none";
@@ -256,6 +268,8 @@ async function saveLevel() {
   const q = document.getElementById("adminQuestion").value.trim();
   const arriveMessage = document.getElementById("adminArriveMessage").value.trim();
   const vibrateOnArrive = document.getElementById("adminVibrateOnArrive").checked;
+  const notifyMessage = document.getElementById("adminNotifyMessage").value.trim();
+  const notifyOnArrive = document.getElementById("adminNotifyOnArrive").checked;
   const a = document.getElementById("adminAnswer").value.trim();
   const t = document.getElementById("adminType").value;
   const qt = document.getElementById("adminQuestionType").value;
@@ -284,6 +298,8 @@ async function saveLevel() {
     questionText: q,
     arriveMessage,
     vibrateOnArrive,
+    notifyMessage,
+    notifyOnArrive,
     answer: a,
     type: t,
     questionType: qt === "none" ? "" : qt,
@@ -403,6 +419,42 @@ async function deleteLevel() {
   loadAdminFields();
 
   alert("🗑️ Level verwijderd");
+}
+
+async function moveLevelUp() {
+  if (!adminActive) return;
+  if (currentLevel <= 0) return;
+
+  const temp = levels[currentLevel - 1];
+  levels[currentLevel - 1] = levels[currentLevel];
+  levels[currentLevel] = temp;
+  currentLevel--;
+
+  await db.collection("games").doc("default").set(
+    { levels },
+    { merge: true }
+  );
+
+  questionShown = false;
+  loadAdminFields();
+}
+
+async function moveLevelDown() {
+  if (!adminActive) return;
+  if (currentLevel >= levels.length - 1) return;
+
+  const temp = levels[currentLevel + 1];
+  levels[currentLevel + 1] = levels[currentLevel];
+  levels[currentLevel] = temp;
+  currentLevel++;
+
+  await db.collection("games").doc("default").set(
+    { levels },
+    { merge: true }
+  );
+
+  questionShown = false;
+  loadAdminFields();
 }
 
 function toggleTestMode(ev) {

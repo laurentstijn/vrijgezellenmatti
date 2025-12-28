@@ -1,4 +1,4 @@
-const CACHE_NAME = "vrijgezellenmatti-v11";
+const CACHE_NAME = "vrijgezellenmatti-v13";
 const CORE_ASSETS = [
   "./",
   "./index.html",
@@ -60,6 +60,24 @@ self.addEventListener("fetch", event => {
         caches.open(CACHE_NAME).then(cache => cache.put(req, copy));
         return res;
       });
+    })
+  );
+});
+
+self.addEventListener("notificationclick", event => {
+  event.notification.close();
+  const levelIndex = event.notification?.data?.levelIndex;
+
+  event.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then(clientsArr => {
+      for (const client of clientsArr) {
+        if ("focus" in client) {
+          client.postMessage({ type: "arrival", levelIndex });
+          return client.focus();
+        }
+      }
+      const url = `./index.html?notify=1&level=${levelIndex ?? ""}`;
+      return self.clients.openWindow(url);
     })
   );
 });

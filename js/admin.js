@@ -29,6 +29,7 @@ function initAdmin() {
   panel.innerHTML = `
     <h2>🔧 Admin</h2>
     <div id="adminLevelIndex"></div>
+    <div id="adminOrderStatus"></div>
 
     <button onclick="prevLevel()">⬅ Vorige</button>
     <button onclick="nextLevel()">➡ Volgende</button>
@@ -186,6 +187,11 @@ function loadAdminFields() {
   const levelIndexEl = document.getElementById("adminLevelIndex");
   if (levelIndexEl) {
     levelIndexEl.innerText = `Level ${currentLevel + 1} / ${levels.length}`;
+  }
+
+  const orderStatusEl = document.getElementById("adminOrderStatus");
+  if (orderStatusEl) {
+    orderStatusEl.innerText = "";
   }
 }
 
@@ -434,7 +440,6 @@ async function moveLevelUp() {
   const temp = levels[currentLevel - 1];
   levels[currentLevel - 1] = levels[currentLevel];
   levels[currentLevel] = temp;
-  currentLevel--;
 
   await db.collection("games").doc("default").set(
     { levels },
@@ -443,6 +448,11 @@ async function moveLevelUp() {
 
   questionShown = false;
   loadAdminFields();
+
+  const orderStatusEl = document.getElementById("adminOrderStatus");
+  if (orderStatusEl) {
+    orderStatusEl.innerText = "✅ Volgorde opgeslagen";
+  }
 }
 
 async function moveLevelDown() {
@@ -452,7 +462,6 @@ async function moveLevelDown() {
   const temp = levels[currentLevel + 1];
   levels[currentLevel + 1] = levels[currentLevel];
   levels[currentLevel] = temp;
-  currentLevel++;
 
   await db.collection("games").doc("default").set(
     { levels },
@@ -461,6 +470,11 @@ async function moveLevelDown() {
 
   questionShown = false;
   loadAdminFields();
+
+  const orderStatusEl = document.getElementById("adminOrderStatus");
+  if (orderStatusEl) {
+    orderStatusEl.innerText = "✅ Volgorde opgeslagen";
+  }
 }
 
 function toggleTestMode(ev) {

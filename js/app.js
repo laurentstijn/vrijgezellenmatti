@@ -2,9 +2,10 @@ let currentLevel = 0;
 let questionShown = false;
 let watchId = null;
 let lastDistance = Infinity;
+let lastPosition = null;
 const notifiedLevels = new Set();
 const notifiedNotificationLevels = new Set();
-let pendingLevel = null;
+let pendingLevelIndex = null;
 let pendingNotificationLevelIndex = null;
 
 const questionMedia = document.getElementById("questionMedia");
@@ -17,9 +18,23 @@ const submitBtn = document.getElementById("submitBtn");
 const enableNotificationsBtn = document.getElementById("enableNotifications");
 
 statusEl.addEventListener("click", () => {
-  if (!pendingLevel) return;
-  showQuestion(pendingLevel);
-  pendingLevel = null;
+  if (pendingLevelIndex === null) return;
+  if (!lastPosition) return;
+  const level = levels[pendingLevelIndex];
+  if (!level) return;
+  const d = distanceInMeters(
+    lastPosition.coords.latitude,
+    lastPosition.coords.longitude,
+    level.lat,
+    level.lng
+  );
+  if (d > RADIUS_METERS) {
+    alert("Je bent nog niet op de locatie");
+    return;
+  }
+  currentLevel = pendingLevelIndex;
+  pendingLevelIndex = null;
+  showQuestion(levels[currentLevel]);
   statusEl.classList.remove("actionable");
 });
 
@@ -77,18 +92,32 @@ async function sendArrivalNotification(level, levelIndex) {
   return true;
 }
 
+function checkLocationNotifications(pos) {
+  if (!levels || !Array.isArray(levels)) return;
+  for (let i = 0; i < levels.length; i++) {
+    const level = levels[i];
+    if (!level || !level.notifyOnArrive) continue;
+    if (notifiedNotificationLevels.has(i)) continue;
+    if (typeof level.lat !== "number" || typeof level.lng !== "number") continue;
+
+    const d = distanceInMeters(
+      pos.coords.latitude,
+      pos.coords.longitude,
+      level.lat,
+      level.lng
+    );
+
+    if (d <= RADIUS_METERS) {
+      sendArrivalNotification(level, i).catch(() => {});
+      notifiedNotificationLevels.add(i);
+    }
+  }
+}
+
 function handleNotificationArrival(levelIndex) {
   if (typeof levelIndex !== "number" || !levels || !levels[levelIndex]) return;
   pendingNotificationLevelIndex = levelIndex;
-
-  if (lastDistance <= RADIUS_METERS || (typeof testMode !== "undefined" && testMode)) {
-    showQuestion(levels[levelIndex]);
-    pendingNotificationLevelIndex = null;
-  } else {
-    pendingLevel = levels[levelIndex];
-    statusEl.innerText = "📍 Locatie bereikt! (tik om verder te gaan)";
-    statusEl.classList.add("actionable");
-  }
+  statusEl.innerText = "➡️ Ga naar de locatie uit je melding";
 }
 
 if ("serviceWorker" in navigator) {
@@ -124,6 +153,7 @@ function startGPS() {
 function onLocation(pos) {
   const level = levels[currentLevel];
   if (!level) return;
+  lastPosition = pos;
 
   const d = distanceInMeters(
     pos.coords.latitude,
@@ -161,21 +191,36 @@ function onLocation(pos) {
     } else {
       statusEl.innerText = "📍 Locatie bereikt! (tik om verder te gaan)";
     }
-    pendingLevel = level;
+    pendingLevelIndex = currentLevel;
     statusEl.classList.add("actionable");
-
-    if (level.notifyOnArrive && !notifiedNotificationLevels.has(currentLevel)) {
-      sendArrivalNotification(level, currentLevel).catch(() => {});
-      notifiedNotificationLevels.add(currentLevel);
-    }
   } else {
     questionShown = false;
-    pendingLevel = null;
+    pendingLevelIndex = null;
     statusEl.classList.remove("actionable");
     statusEl.innerText = `Nog ${Math.round(d)} meter…`;
     questionBox.classList.add("hidden");
     questionMedia.classList.add("hidden");
     questionMedia.innerHTML = "";
+  }
+
+  checkLocationNotifications(pos);
+
+  if (
+    pendingNotificationLevelIndex !== null &&
+    levels[pendingNotificationLevelIndex]
+  ) {
+    const target = levels[pendingNotificationLevelIndex];
+    const nd = distanceInMeters(
+      pos.coords.latitude,
+      pos.coords.longitude,
+      target.lat,
+      target.lng
+    );
+    if (nd <= RADIUS_METERS) {
+      currentLevel = pendingNotificationLevelIndex;
+      pendingNotificationLevelIndex = null;
+      showQuestion(target);
+    }
   }
 }
 

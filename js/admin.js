@@ -31,8 +31,8 @@ function initAdmin() {
 
   panel.innerHTML = `
     <h2>🔧 Admin</h2>
-    // <div id="adminLevelIndex"></div>
-    // <div id="adminOrderStatus"></div>
+    <!--<div id="adminLevelIndex"></div>
+    <div id="adminOrderStatus"></div>-->
 
     <div class="admin-actions">
       <button onclick="toggleTestMode(event)">🧪 Testmodus: UIT</button>

@@ -1,4 +1,4 @@
-alert("APP.JS WORDT NU GELADEN");
+//alert("APP.JS WORDT NU GELADEN");
 // ================================
 // App state
 // ================================

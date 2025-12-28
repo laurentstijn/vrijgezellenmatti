@@ -8,6 +8,8 @@ let tokenClient = null;
 let openLevelIndex = null;
 let dragFromIndex = null;
 let dragOverIndex = null;
+let adminMap = null;
+let adminMarkers = [];
 
 function initAdmin() {
   const params = new URLSearchParams(window.location.search);
@@ -31,8 +33,8 @@ function initAdmin() {
 
   panel.innerHTML = `
     <h2>🔧 Admin</h2>
-    <!--<div id="adminLevelIndex"></div>
-    <div id="adminOrderStatus"></div>-->
+    <div id="adminLevelIndex"></div>
+    <div id="adminOrderStatus"></div>
 
     <div class="admin-actions">
       <button onclick="toggleTestMode(event)">🧪 Testmodus: UIT</button>
@@ -44,6 +46,7 @@ function initAdmin() {
 
     <h3>Vragen</h3>
     <div id="adminLevelList" class="admin-list"></div>
+    <div id="adminMap" class="admin-map"></div>
 
     <hr>
 
@@ -163,6 +166,7 @@ function initAdmin() {
 
   initDriveAuth();
   loadAdminFields();
+  initAdminMap();
 }
 
 function initDriveAuth() {
@@ -220,6 +224,8 @@ function loadAdminFields() {
   }
 
   renderLevelList();
+  initAdminMap();
+  refreshAdminMap();
 }
 
 function updateMediaAcceptForItem(item) {
@@ -330,6 +336,53 @@ function renderLevelList() {
       </div>
     `;
   }).join("");
+}
+
+function initAdminMap() {
+  const mapEl = document.getElementById("adminMap");
+  if (!mapEl || adminMap) return;
+  if (!window.L) {
+    setTimeout(initAdminMap, 200);
+    return;
+  }
+
+  adminMap = L.map(mapEl).setView([0, 0], 2);
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    attribution: "&copy; OpenStreetMap"
+  }).addTo(adminMap);
+}
+
+function refreshAdminMap() {
+  if (!adminMap || !levels) return;
+
+  adminMarkers.forEach(marker => marker.remove());
+  adminMarkers = [];
+
+  const bounds = [];
+
+  levels.forEach((level, index) => {
+    if (typeof level.lat !== "number" || typeof level.lng !== "number") return;
+    const color = index === currentLevel ? "#d33" : "#2c7";
+    const marker = L.circleMarker([level.lat, level.lng], {
+      radius: index === currentLevel ? 8 : 6,
+      color,
+      weight: 2,
+      fillOpacity: 0.6
+    }).addTo(adminMap);
+
+    marker.on("click", () => {
+      currentLevel = index;
+      openLevelIndex = index;
+      loadAdminFields();
+    });
+
+    adminMarkers.push(marker);
+    bounds.push([level.lat, level.lng]);
+  });
+
+  if (bounds.length) {
+    adminMap.fitBounds(bounds, { padding: [20, 20] });
+  }
 }
 
 function driveMediaUrl(id, isImage) {

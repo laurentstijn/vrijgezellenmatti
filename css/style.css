@@ -45,6 +45,14 @@ input {
   margin-bottom: 10px;
 }
 
+.admin-map {
+  height: 220px;
+  margin-top: 10px;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid #ddd;
+}
+
 .admin-list-item {
   padding: 8px;
   border-radius: 8px;

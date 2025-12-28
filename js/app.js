@@ -5,7 +5,6 @@ let lastDistance = Infinity;
 let lastPosition = null;
 const notifiedLevels = new Set();
 const notifiedNotificationLevels = new Set();
-let pendingLevelIndex = null;
 let pendingNotificationLevelIndex = null;
 
 const questionMedia = document.getElementById("questionMedia");
@@ -16,27 +15,6 @@ const answerInput = document.getElementById("answer");
 const photoInput = document.getElementById("photoInput");
 const submitBtn = document.getElementById("submitBtn");
 const enableNotificationsBtn = document.getElementById("enableNotifications");
-
-statusEl.addEventListener("click", () => {
-  if (pendingLevelIndex === null) return;
-  if (!lastPosition) return;
-  const level = levels[pendingLevelIndex];
-  if (!level) return;
-  const d = distanceInMeters(
-    lastPosition.coords.latitude,
-    lastPosition.coords.longitude,
-    level.lat,
-    level.lng
-  );
-  if (d > RADIUS_METERS) {
-    alert("Je bent nog niet op de locatie");
-    return;
-  }
-  currentLevel = pendingLevelIndex;
-  pendingLevelIndex = null;
-  showQuestion(levels[currentLevel]);
-  statusEl.classList.remove("actionable");
-});
 
 if (enableNotificationsBtn) {
   enableNotificationsBtn.addEventListener("click", async () => {
@@ -182,21 +160,18 @@ function onLocation(pos) {
     const arriveMessage = level.arriveMessage ? level.arriveMessage.trim() : "";
     if (!notifiedLevels.has(currentLevel)) {
       statusEl.innerText = arriveMessage
-        ? `📍 ${arriveMessage} (tik om verder te gaan)`
-        : "📍 Locatie bereikt! (tik om verder te gaan)";
+        ? `📍 ${arriveMessage}`
+        : "📍 Locatie bereikt!";
       if (level.vibrateOnArrive && navigator.vibrate) {
         navigator.vibrate([200, 100, 200]);
       }
       notifiedLevels.add(currentLevel);
     } else {
-      statusEl.innerText = "📍 Locatie bereikt! (tik om verder te gaan)";
+      statusEl.innerText = "📍 Locatie bereikt!";
     }
-    pendingLevelIndex = currentLevel;
-    statusEl.classList.add("actionable");
+    showQuestion(level);
   } else {
     questionShown = false;
-    pendingLevelIndex = null;
-    statusEl.classList.remove("actionable");
     statusEl.innerText = `Nog ${Math.round(d)} meter…`;
     questionBox.classList.add("hidden");
     questionMedia.classList.add("hidden");

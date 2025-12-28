@@ -97,5 +97,5 @@ function prevLevel() {
 
 function forceCorrect() {
   if (!adminActive) return;
-  submitAnswer();
+  submitAnswer(true);
 }

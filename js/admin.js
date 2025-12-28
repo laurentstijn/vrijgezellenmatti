@@ -1,3 +1,4 @@
+alert("ADMIN MODE ACTIEF");
 function initAdmin() {
   const pin = prompt("Admin pincode?");
   if (pin !== "1234") return;

@@ -1,10 +1,20 @@
-const ADMIN_PIN = "1234";
-
 function initAdmin() {
-  const pin = prompt("Admin pincode?");
-  if (pin !== ADMIN_PIN) return;
+  const params = new URLSearchParams(window.location.search);
+  const isAdmin = params.get("admin") === "1";
+
+  if (!isAdmin) return;
 
   const panel = document.getElementById("adminPanel");
   panel.classList.remove("hidden");
-  panel.innerHTML = "<h2>🔧 Admin actief</h2>";
+
+  panel.innerHTML = `
+    <h2>🔧 Admin</h2>
+    <p>Admin-modus actief</p>
+    <button onclick="forceCorrect()">Forceer juiste antwoord</button>
+  `;
+}
+
+function forceCorrect() {
+  alert("Admin: antwoord geforceerd");
+  submitAnswer();
 }

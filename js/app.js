@@ -10,6 +10,7 @@ const photoInput = document.getElementById("photoInput");
 const submitBtn = document.getElementById("submitBtn");
 
 submitBtn.addEventListener("click", () => submitAnswer(false));
+photoInput.addEventListener("change", () => submitAnswer(false));
 
 async function loadLevels() {
   const doc = await db.collection("games").doc("default").get();
@@ -23,18 +24,11 @@ async function loadLevels() {
   }
 }
 
-/* ================================
-   GPS
-================================ */
+/* ================= GPS ================= */
 function startGPS() {
-  if (!navigator.geolocation) {
-    statusEl.innerText = "❌ GPS niet ondersteund";
-    return;
-  }
-
   watchId = navigator.geolocation.watchPosition(
     onLocation,
-    onLocationError,
+    err => statusEl.innerText = "❌ GPS fout",
     { enableHighAccuracy: true }
   );
 }
@@ -43,10 +37,12 @@ function onLocation(pos) {
   const level = levels[currentLevel];
   if (!level) return;
 
-  const lat = pos.coords.latitude;
-  const lng = pos.coords.longitude;
-
-  const d = distanceInMeters(lat, lng, level.lat, level.lng);
+  const d = distanceInMeters(
+    pos.coords.latitude,
+    pos.coords.longitude,
+    level.lat,
+    level.lng
+  );
 
   if (d <= RADIUS_METERS) {
     statusEl.innerText = "📍 Locatie bereikt!";
@@ -57,13 +53,7 @@ function onLocation(pos) {
   }
 }
 
-function onLocationError(err) {
-  statusEl.innerText = "❌ GPS-fout: " + err.message;
-}
-
-/* ================================
-   Vragen
-================================ */
+/* ================= Vragen ================= */
 function showQuestion(level) {
   if (questionShown) return;
   questionShown = true;
@@ -85,65 +75,30 @@ function showQuestion(level) {
 
 function submitAnswer(force = false) {
   const level = levels[currentLevel];
-  let userAnswer = "";
 
-  // ================================
-  // FOTO-level → altijd goed
-  // ================================
-  if (level.type === "photo") {
-    userAnswer = "photo";
-  } else {
-    userAnswer = answerInput.value.trim().toLowerCase();
-
-    // Leeg antwoord (alleen blokkeren als niet geforceerd)
-    if (!force && userAnswer === "") {
-      alert("Vul een antwoord in");
-      return;
-    }
-
-    // Fout antwoord (alleen blokkeren als niet geforceerd)
-    if (
-      !force &&
-      level.answer &&
-      userAnswer !== level.answer.toString().toLowerCase()
-    ) {
-      alert("❌ Fout antwoord, probeer opnieuw");
-      return;
-    }
+  if (level.type !== "photo" && !force) {
+    const v = answerInput.value.trim().toLowerCase();
+    if (!v) return alert("Vul een antwoord in");
+    if (level.answer && v !== level.answer.toLowerCase())
+      return alert("❌ Fout antwoord");
   }
 
-  // ================================
-  // Correct of geforceerd → verder
-  // ================================
   questionBox.classList.add("hidden");
   questionShown = false;
-
-  navigator.vibrate?.(200);
-
   currentLevel++;
 
-  // Admin-form syncen (als admin actief is)
-  if (typeof loadAdminFields === "function") {
-    loadAdminFields();
-  }
+  if (typeof loadAdminFields === "function") loadAdminFields();
 
-  // ================================
-  // Einde spel?
-  // ================================
   if (currentLevel >= levels.length) {
     statusEl.innerText = "🎉 Klaar!";
+    navigator.geolocation.clearWatch(watchId);
     return;
   }
 
   statusEl.innerText = "➡️ Ga naar de volgende locatie…";
 }
 
-
-photoInput.addEventListener("change", () => submitAnswer(false));
-
-/* ================================
-   INIT
-================================ */
+/* ================= INIT ================= */
 async function init() {
   await loadLevels();
   initAdmin();

@@ -35,6 +35,13 @@ statusEl.innerText = "Zoek de startlocatie…";
 submitBtn.addEventListener("click", submitAnswer);
 
 await loadLevels();
+async function init() {
+  await loadLevels();
+  initAdmin();
+  startGPS();
+}
+
+init();
 
 // ================================
 // GPS tracking

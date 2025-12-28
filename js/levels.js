@@ -1,19 +1,19 @@
 const levels = [
   {
-    lat: 52.0907,
-    lng: 5.1214,
+    lat: 51.236593,
+    lng: 4.413590,
     type: "number",
     question: "Hoeveel traptreden zie je?"
   },
   {
-    lat: 52.0912,
-    lng: 5.1220,
+    lat: 51.236593,
+    lng: 4.413590,
     type: "number",
     question: "Hoeveel letters heeft de partnernaam?"
   },
   {
-    lat: 52.0918,
-    lng: 5.1231,
+    lat: 51.236593,
+    lng: 4.413590,
     type: "photo",
     question: "Maak een groepsfoto bij het standbeeld"
   }

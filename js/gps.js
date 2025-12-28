@@ -1,7 +1,7 @@
 const RADIUS_METERS = 50;
 
 function distanceInMeters(lat1, lon1, lat2, lon2) {
-  const R = 6371000; // aarde
+  const R = 6371000;
   const toRad = d => d * Math.PI / 180;
 
   const dLat = toRad(lat2 - lat1);

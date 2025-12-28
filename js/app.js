@@ -26,6 +26,7 @@ async function loadLevels() {
 
 /* ================= GPS ================= */
 function startGPS() {
+  if (typeof testMode !== "undefined" && testMode) return;
   watchId = navigator.geolocation.watchPosition(
     onLocation,
     err => statusEl.innerText = "❌ GPS fout",
@@ -44,7 +45,7 @@ function onLocation(pos) {
     level.lng
   );
 
-  if (d <= RADIUS_METERS) {
+  if (d <= RADIUS_METERS || testMode) {
     statusEl.innerText = "📍 Locatie bereikt!";
     showQuestion(level);
   } else {

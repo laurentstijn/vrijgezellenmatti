@@ -123,26 +123,32 @@ function submitAnswer() {
   const level = levels[currentLevel];
   let userAnswer = "";
 
-  // Foto-opdracht → altijd goed
+  // FOTO → altijd goed
   if (level.type === "photo") {
     userAnswer = "photo";
-  } else {
+  } 
+  else {
     userAnswer = answerInput.value.trim().toLowerCase();
-    if (!userAnswer) {
+
+    if (userAnswer === "") {
       alert("Vul een antwoord in");
       return;
     }
+
+    // ❌ FOUT ANTWOORD → STOP
+    if (
+      level.answer &&
+      userAnswer !== level.answer.toString().toLowerCase()
+    ) {
+      alert("❌ Dat is niet juist, probeer opnieuw");
+      return; // 👈 DIT WAS DE SLEUTEL
+    }
   }
 
-  // Controle (behalve foto)
-  if (level.answer && userAnswer !== level.answer.toLowerCase()) {
-    alert("❌ Dat is niet juist, probeer opnieuw");
-    return;
-  }
-
-  // Correct
+  // ✅ CORRECT → PAS NU GAAN WE VERDER
   questionBox.classList.add("hidden");
   questionShown = false;
+
   navigator.vibrate?.(200);
 
   currentLevel++;
@@ -154,6 +160,7 @@ function submitAnswer() {
 
   statusEl.innerText = "➡️ Ga naar de volgende locatie…";
 }
+
 
 // ================================
 // Foto-opdracht afronden

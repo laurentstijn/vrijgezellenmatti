@@ -65,6 +65,22 @@ function onLocation(pos) {
 }
 
 /* ================= Vragen ================= */
+function normalizeMediaUrl(url, mediaType) {
+  if (!url) return "";
+
+  if (url.includes("drive.google.com")) {
+    const fileMatch = url.match(/\/file\/d\/([^/]+)/);
+    const idMatch = url.match(/[?&]id=([^&]+)/);
+    const id = (fileMatch && fileMatch[1]) || (idMatch && idMatch[1]);
+    if (id) {
+      const exportType = mediaType === "video" ? "download" : "view";
+      return `https://drive.google.com/uc?export=${exportType}&id=${id}`;
+    }
+  }
+
+  return url;
+}
+
 function showQuestion(level) {
   if (questionShown) return;
   questionShown = true;
@@ -82,17 +98,19 @@ function showQuestion(level) {
   // Vraagtekst
   questionEl.innerText = level.questionText || level.question || "";
 
+  const mediaUrl = normalizeMediaUrl(level.mediaUrl || "", level.questionType);
+
   // Media als vraag
-  if (level.questionType === "photo") {
+  if (level.questionType === "photo" && mediaUrl) {
     questionMedia.innerHTML = `
-      <img src="${level.mediaUrl}" style="max-width:100%; border-radius:8px;">
+      <img src="${mediaUrl}" style="max-width:100%; border-radius:8px;">
     `;
     questionMedia.classList.remove("hidden");
   }
 
-  if (level.questionType === "video") {
+  if (level.questionType === "video" && mediaUrl) {
     questionMedia.innerHTML = `
-      <video src="${level.mediaUrl}" controls style="max-width:100%; border-radius:8px;"></video>
+      <video src="${mediaUrl}" controls playsinline style="max-width:100%; border-radius:8px;"></video>
     `;
     questionMedia.classList.remove("hidden");
   }

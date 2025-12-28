@@ -1,47 +1,125 @@
+// ================================
+// App state
+// ================================
 let currentLevel = 0;
+let questionShown = false;
 
+// ================================
+// DOM elementen
+// ================================
 const statusEl = document.getElementById("status");
 const questionBox = document.getElementById("questionBox");
 const questionEl = document.getElementById("question");
 const answerInput = document.getElementById("answer");
+const photoInput = document.getElementById("photoInput");
+const submitBtn = document.getElementById("submitBtn");
 
-document.getElementById("submitBtn").onclick = submitAnswer;
+// ================================
+// Init
+// ================================
+statusEl.innerText = "Zoek de startlocatie…";
 
-navigator.geolocation.watchPosition(pos => {
+submitBtn.addEventListener("click", submitAnswer);
+
+// ================================
+// GPS tracking
+// ================================
+navigator.geolocation.watchPosition(
+  onLocationUpdate,
+  onLocationError,
+  {
+    enableHighAccuracy: true,
+    maximumAge: 0,
+    timeout: 10000
+  }
+);
+
+// ================================
+// GPS callback
+// ================================
+function onLocationUpdate(pos) {
   const level = levels[currentLevel];
+  if (!level) return;
+
+  const playerLat = pos.coords.latitude;
+  const playerLng = pos.coords.longitude;
+
   const d = distanceInMeters(
-    pos.coords.latitude,
-    pos.coords.longitude,
+    playerLat,
+    playerLng,
     level.lat,
     level.lng
   );
 
-  updateMap(
-    pos.coords.latitude,
-    pos.coords.longitude,
-    level.lat,
-    level.lng
+  // Update kaart
+  updateMap(playerLat, playerLng, level.lat, level.lng);
+
+  // DEBUG (mag je laten staan of later verwijderen)
+  console.log(
+    `Afstand: ${Math.round(d)} m | Jij: ${playerLat},${playerLng} | Doel: ${level.lat},${level.lng}`
   );
 
-  if (d < radius) {
+  if (d <= radius) {
     statusEl.innerText = "📍 Locatie bereikt!";
-    showQuestion();
+    showQuestion(level);
   } else {
+    questionShown = false;
     statusEl.innerText = `Nog ${Math.round(d)} meter…`;
   }
-}, null, { enableHighAccuracy: true });
-
-function showQuestion() {
-  questionEl.innerText = levels[currentLevel].question;
-  questionBox.classList.remove("hidden");
 }
 
+// ================================
+// GPS error
+// ================================
+function onLocationError(err) {
+  statusEl.innerText = "❌ GPS-fout: " + err.message;
+}
+
+// ================================
+// Vraag tonen
+// ================================
+function showQuestion(level) {
+  if (questionShown) return;
+
+  questionShown = true;
+  questionEl.innerText = level.question;
+  questionBox.classList.remove("hidden");
+
+  // Reset invoer
+  answerInput.value = "";
+  answerInput.classList.toggle("hidden", level.type === "photo");
+  photoInput.classList.toggle("hidden", level.type !== "photo");
+
+  // Foto-opdracht → camera openen
+  if (level.type === "photo") {
+    photoInput.click();
+  }
+}
+
+// ================================
+// Antwoord verwerken
+// ================================
 function submitAnswer() {
   questionBox.classList.add("hidden");
+  questionShown = false;
+
+  navigator.vibrate?.(200);
+
   currentLevel++;
 
   if (currentLevel >= levels.length) {
     statusEl.innerText = "🎉 Finale bereikt!";
-    navigator.vibrate(300);
+    console.log("Spel klaar");
+    return;
   }
+
+  statusEl.innerText = "➡️ Ga naar de volgende locatie…";
 }
+
+// ================================
+// Foto-opdracht afronden
+// ================================
+photoInput.addEventListener("change", () => {
+  alert("📸 Foto opgeslagen!");
+  submitAnswer();
+});

@@ -202,5 +202,15 @@ photoInput.addEventListener("change", () => {
   submitAnswer();
 });
 
-initAdmin();
+
+
+async function init() {
+  console.log("🚀 init start");
+
+  await loadLevels();   // 🔥 Firebase eerst
+  initAdmin();          // 🔐 admin daarna
+  startGPS();           // 📍 GPS als laatste
+}
+
+init();
 

@@ -119,7 +119,7 @@ function showQuestion(level) {
 // ================================
 // Antwoord verwerken
 // ================================
-function submitAnswer() {
+function submitAnswer(force = false) {
   const level = levels[currentLevel];
   let userAnswer = "";
 
@@ -130,22 +130,24 @@ function submitAnswer() {
   else {
     userAnswer = answerInput.value.trim().toLowerCase();
 
-    if (userAnswer === "") {
+    // ❌ Alleen blokkeren als NIET geforceerd
+    if (!force && userAnswer === "") {
       alert("Vul een antwoord in");
       return;
     }
 
-    // ❌ FOUT ANTWOORD → STOP
+    // ❌ Alleen controleren als NIET geforceerd
     if (
+      !force &&
       level.answer &&
       userAnswer !== level.answer.toString().toLowerCase()
     ) {
       alert("❌ Dat is niet juist, probeer opnieuw");
-      return; // 👈 DIT WAS DE SLEUTEL
+      return;
     }
   }
 
-  // ✅ CORRECT → PAS NU GAAN WE VERDER
+  // ✅ CORRECT (of geforceerd)
   questionBox.classList.add("hidden");
   questionShown = false;
 

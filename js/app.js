@@ -65,13 +65,17 @@ function onLocation(pos) {
 }
 
 /* ================= Vragen ================= */
+function extractDriveId(url) {
+  const fileMatch = url.match(/\/file\/d\/([^/]+)/);
+  const idMatch = url.match(/[?&]id=([^&]+)/);
+  return (fileMatch && fileMatch[1]) || (idMatch && idMatch[1]) || "";
+}
+
 function normalizeMediaUrl(url, mediaType) {
   if (!url) return "";
 
   if (url.includes("drive.google.com")) {
-    const fileMatch = url.match(/\/file\/d\/([^/]+)/);
-    const idMatch = url.match(/[?&]id=([^&]+)/);
-    const id = (fileMatch && fileMatch[1]) || (idMatch && idMatch[1]);
+    const id = extractDriveId(url);
     if (id) {
       if (mediaType === "photo") {
         return `https://drive.google.com/thumbnail?id=${id}&sz=w1200`;
@@ -111,9 +115,19 @@ function showQuestion(level) {
   }
 
   if (level.questionType === "video" && mediaUrl) {
-    questionMedia.innerHTML = `
-      <video src="${mediaUrl}" controls playsinline style="max-width:100%; border-radius:8px;"></video>
-    `;
+    if (mediaUrl.includes("drive.google.com")) {
+      const id = extractDriveId(mediaUrl);
+      const previewUrl = id
+        ? `https://drive.google.com/file/d/${id}/preview`
+        : mediaUrl;
+      questionMedia.innerHTML = `
+        <iframe src="${previewUrl}" style="width:100%; height:240px; border:0; border-radius:8px;" allow="autoplay"></iframe>
+      `;
+    } else {
+      questionMedia.innerHTML = `
+        <video src="${mediaUrl}" controls playsinline style="max-width:100%; border-radius:8px;"></video>
+      `;
+    }
     questionMedia.classList.remove("hidden");
   }
 

@@ -2,6 +2,7 @@ let currentLevel = 0;
 let questionShown = false;
 let watchId = null;
 
+const questionMedia = document.getElementById("questionMedia");
 const statusEl = document.getElementById("status");
 const questionBox = document.getElementById("questionBox");
 const questionEl = document.getElementById("question");
@@ -59,19 +60,30 @@ function showQuestion(level) {
   if (questionShown) return;
   questionShown = true;
 
-  questionEl.innerText = level.question;
   questionBox.classList.remove("hidden");
-  answerInput.value = "";
+  questionMedia.classList.add("hidden");
+  questionMedia.innerHTML = "";
 
-  if (level.type === "photo") {
-    answerInput.classList.add("hidden");
-    photoInput.classList.remove("hidden");
-    photoInput.click();
-  } else {
-    photoInput.classList.add("hidden");
-    answerInput.classList.remove("hidden");
-    answerInput.type = level.type === "number" ? "number" : "text";
+  // Vraagtekst
+  questionEl.innerText = level.questionText || level.question || "";
+
+  // Media als vraag
+  if (level.questionType === "photo") {
+    questionMedia.innerHTML = `
+      <img src="${level.mediaUrl}" style="max-width:100%; border-radius:8px;">
+    `;
+    questionMedia.classList.remove("hidden");
   }
+
+  if (level.questionType === "video") {
+    questionMedia.innerHTML = `
+      <video src="${level.mediaUrl}" controls style="max-width:100%; border-radius:8px;"></video>
+    `;
+    questionMedia.classList.remove("hidden");
+  }
+
+  answerInput.value = "";
+  answerInput.type = level.type === "number" ? "number" : "text";
 }
 
 function submitAnswer(force = false) {

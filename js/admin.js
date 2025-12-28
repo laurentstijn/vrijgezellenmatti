@@ -28,6 +28,7 @@ function initAdmin() {
 
   panel.innerHTML = `
     <h2>🔧 Admin</h2>
+    <div id="adminLevelIndex"></div>
 
     <button onclick="prevLevel()">⬅ Vorige</button>
     <button onclick="nextLevel()">➡ Volgende</button>
@@ -181,6 +182,11 @@ function loadAdminFields() {
   const mediaInfo = document.getElementById("adminMediaInfo");
   mediaInfo.innerText = level.mediaUrl ? `Huidige media: ${level.mediaUrl}` : "Geen media";
   updateMediaAccept();
+
+  const levelIndexEl = document.getElementById("adminLevelIndex");
+  if (levelIndexEl) {
+    levelIndexEl.innerText = `Level ${currentLevel + 1} / ${levels.length}`;
+  }
 }
 
 function driveMediaUrl(id, isImage) {

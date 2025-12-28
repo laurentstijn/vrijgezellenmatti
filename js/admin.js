@@ -22,8 +22,12 @@ function initAdmin() {
     <button onclick="prevLevel()">⬅ Vorige</button>
     <button onclick="nextLevel()">➡ Volgende</button>
     <button onclick="forceCorrect()">✅ Forceer goed</button>
-
+    
     <hr>
+    
+    <button onclick="addLevel()">➕ Nieuw level</button>
+    <button onclick="deleteLevel()">🗑️ Verwijder level</button>
+
 
     <label>Vraag</label>
     <input id="adminQuestion" type="text">

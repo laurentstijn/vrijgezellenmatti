@@ -31,20 +31,23 @@ function initAdmin() {
     <div id="adminLevelIndex"></div>
     <div id="adminOrderStatus"></div>
 
-    <button onclick="prevLevel()">⬅ Vorige</button>
-    <button onclick="nextLevel()">➡ Volgende</button>
-    <button onclick="forceCorrect()">✅ Forceer goed</button>
+    <div class="admin-actions">
+      <button onclick="forceCorrect()">✅ Forceer goed</button>
+      <button onclick="toggleTestMode(event)">🧪 Testmodus: UIT</button>
+    </div>
 
-    <button onclick="toggleTestMode(event)">🧪 Testmodus: UIT</button>
+    <h3>Vragen</h3>
+    <div id="adminLevelList" class="admin-list"></div>
+    <div class="admin-actions">
+      <button onclick="addLevel()">➕ Nieuw level</button>
+      <button onclick="deleteLevel()">🗑️ Verwijder level</button>
+      <button onclick="moveLevelUp()">⬆️ Verplaats omhoog</button>
+      <button onclick="moveLevelDown()">⬇️ Verplaats omlaag</button>
+    </div>
 
     <hr>
-    
-    <button onclick="addLevel()">➕ Nieuw level</button>
-    <button onclick="deleteLevel()">🗑️ Verwijder level</button>
-    <button onclick="moveLevelUp()">⬆️ Verplaats omhoog</button>
-    <button onclick="moveLevelDown()">⬇️ Verplaats omlaag</button>
 
-
+    <h3>Vraag bewerken</h3>
     <label>Vraag</label>
     <input id="adminQuestion" type="text">
 

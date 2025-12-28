@@ -1,4 +1,4 @@
-const CACHE_NAME = "vrijgezellenmatti-v16";
+const CACHE_NAME = "vrijgezellenmatti-v17";
 const CORE_ASSETS = [
   "./",
   "./index.html",

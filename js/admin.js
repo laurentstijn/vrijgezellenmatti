@@ -105,6 +105,45 @@ function initAdmin() {
   const driveLoginBtn = document.getElementById("adminDriveLogin");
   driveLoginBtn.addEventListener("click", requestDriveAuth);
 
+  const listEl = document.getElementById("adminLevelList");
+  if (listEl) {
+    listEl.addEventListener("click", event => {
+      const item = event.target.closest(".admin-list-item");
+      if (!item) return;
+      const idx = parseInt(item.dataset.index, 10);
+      if (Number.isNaN(idx)) return;
+      currentLevel = idx;
+      loadAdminFields();
+    });
+
+    listEl.addEventListener("dragstart", event => {
+      const item = event.target.closest(".admin-list-item");
+      if (!item) return;
+      event.dataTransfer.effectAllowed = "move";
+      event.dataTransfer.setData("text/plain", item.dataset.index);
+      listEl.classList.add("dragging");
+    });
+
+    listEl.addEventListener("dragover", event => {
+      event.preventDefault();
+      event.dataTransfer.dropEffect = "move";
+    });
+
+    listEl.addEventListener("drop", event => {
+      event.preventDefault();
+      const item = event.target.closest(".admin-list-item");
+      if (!item) return;
+      const from = parseInt(event.dataTransfer.getData("text/plain"), 10);
+      const to = parseInt(item.dataset.index, 10);
+      if (Number.isNaN(from) || Number.isNaN(to) || from === to) return;
+      reorderLevels(from, to);
+    });
+
+    listEl.addEventListener("dragend", () => {
+      listEl.classList.remove("dragging");
+    });
+  }
+
   initDriveAuth();
   loadAdminFields();
 }
@@ -193,6 +232,34 @@ function loadAdminFields() {
   if (orderStatusEl) {
     orderStatusEl.innerText = "";
   }
+
+  renderLevelList();
+}
+
+function escapeHtml(value) {
+  return String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function renderLevelList() {
+  const listEl = document.getElementById("adminLevelList");
+  if (!listEl || !levels) return;
+
+  listEl.innerHTML = levels.map((level, index) => {
+    const title = (level.questionText || level.question || "Onbekende vraag").trim();
+    const shortTitle = title.length > 60 ? `${title.slice(0, 60)}…` : title;
+    const activeClass = index === currentLevel ? "active" : "";
+    return `
+      <div class="admin-list-item ${activeClass}" draggable="true" data-index="${index}">
+        <span class="admin-list-index">${index + 1}</span>
+        <span class="admin-list-title">${escapeHtml(shortTitle)}</span>
+      </div>
+    `;
+  }).join("");
 }
 
 function driveMediaUrl(id, isImage) {
@@ -325,6 +392,7 @@ async function saveLevel() {
     { merge: true }
   );
 
+  renderLevelList();
   alert("✅ Level opgeslagen");
 }
 
@@ -402,6 +470,7 @@ async function addLevel() {
 
   questionShown = false;
   loadAdminFields();
+  renderLevelList();
 
   alert("➕ Nieuw level toegevoegd");
 }
@@ -429,54 +498,49 @@ async function deleteLevel() {
 
   questionShown = false;
   loadAdminFields();
+  renderLevelList();
 
   alert("🗑️ Level verwijderd");
+}
+
+async function reorderLevels(from, to) {
+  const moved = levels.splice(from, 1)[0];
+  levels.splice(to, 0, moved);
+
+  if (currentLevel === from) {
+    currentLevel = to;
+  } else if (from < currentLevel && to >= currentLevel) {
+    currentLevel -= 1;
+  } else if (from > currentLevel && to <= currentLevel) {
+    currentLevel += 1;
+  }
+
+  await db.collection("games").doc("default").set(
+    { levels },
+    { merge: true }
+  );
+
+  questionShown = false;
+  loadAdminFields();
+
+  const orderStatusEl = document.getElementById("adminOrderStatus");
+  if (orderStatusEl) {
+    orderStatusEl.innerText = "✅ Volgorde opgeslagen";
+  }
 }
 
 async function moveLevelUp() {
   if (!adminActive) return;
   if (currentLevel <= 0) return;
 
-  console.log("⬆️ Move up", { from: currentLevel, to: currentLevel - 1 });
-  const temp = levels[currentLevel - 1];
-  levels[currentLevel - 1] = levels[currentLevel];
-  levels[currentLevel] = temp;
-
-  await db.collection("games").doc("default").set(
-    { levels },
-    { merge: true }
-  );
-
-  questionShown = false;
-  loadAdminFields();
-
-  const orderStatusEl = document.getElementById("adminOrderStatus");
-  if (orderStatusEl) {
-    orderStatusEl.innerText = "✅ Volgorde opgeslagen";
-  }
+  await reorderLevels(currentLevel, currentLevel - 1);
 }
 
 async function moveLevelDown() {
   if (!adminActive) return;
   if (currentLevel >= levels.length - 1) return;
 
-  console.log("⬇️ Move down", { from: currentLevel, to: currentLevel + 1 });
-  const temp = levels[currentLevel + 1];
-  levels[currentLevel + 1] = levels[currentLevel];
-  levels[currentLevel] = temp;
-
-  await db.collection("games").doc("default").set(
-    { levels },
-    { merge: true }
-  );
-
-  questionShown = false;
-  loadAdminFields();
-
-  const orderStatusEl = document.getElementById("adminOrderStatus");
-  if (orderStatusEl) {
-    orderStatusEl.innerText = "✅ Volgorde opgeslagen";
-  }
+  await reorderLevels(currentLevel, currentLevel + 1);
 }
 
 function toggleTestMode(ev) {

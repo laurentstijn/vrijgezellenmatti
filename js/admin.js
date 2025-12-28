@@ -54,7 +54,7 @@ function loadAdminFields() {
   document.getElementById("adminAnswer").value = level.answer || "";
 }
 
-function saveQuestion() {
+async function saveQuestion() {
   if (!adminActive) return;
 
   const q = document.getElementById("adminQuestion").value.trim();
@@ -68,9 +68,15 @@ function saveQuestion() {
   levels[currentLevel].question = q;
   levels[currentLevel].answer = a;
 
+  await db.collection("games").doc("default").set(
+    { levels },
+    { merge: true }
+  );
+
   questionShown = false;
-  alert("✅ Vraag opgeslagen");
+  alert("✅ Vraag opgeslagen in Firebase");
 }
+
 
 // ================================
 // Navigatie

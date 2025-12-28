@@ -1,4 +1,4 @@
-const levels = [
+let levels = [
   {
     lat: 51.236593,
     lng: 4.413590,

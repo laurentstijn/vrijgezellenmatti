@@ -120,16 +120,35 @@ function showQuestion(level) {
 // Antwoord verwerken
 // ================================
 function submitAnswer() {
+  const level = levels[currentLevel];
+  let userAnswer = "";
+
+  // Foto-opdracht → altijd goed
+  if (level.type === "photo") {
+    userAnswer = "photo";
+  } else {
+    userAnswer = answerInput.value.trim().toLowerCase();
+    if (!userAnswer) {
+      alert("Vul een antwoord in");
+      return;
+    }
+  }
+
+  // Controle (behalve foto)
+  if (level.answer && userAnswer !== level.answer.toLowerCase()) {
+    alert("❌ Dat is niet juist, probeer opnieuw");
+    return;
+  }
+
+  // Correct
   questionBox.classList.add("hidden");
   questionShown = false;
-
   navigator.vibrate?.(200);
 
   currentLevel++;
 
   if (currentLevel >= levels.length) {
     statusEl.innerText = "🎉 Finale bereikt!";
-    console.log("Spel klaar");
     return;
   }
 

@@ -1,5 +1,5 @@
 // ================================
-// Firebase configuratie (COMPAT)
+// Firebase configuratie
 // ================================
 const firebaseConfig = {
   apiKey: "AIzaSyCBKlUwxs5X4Z0i3_Po25pb3jUDIxFuL84",
@@ -11,10 +11,15 @@ const firebaseConfig = {
 };
 
 // ================================
-// Firebase init
+// Firebase init (SAFE)
 // ================================
+if (!firebase.apps.length) {
+  firebase.initializeApp(firebaseConfig);
+}
+
 const db = firebase.firestore();
 
+// Safari / iOS fix
 db.settings(
   {
     experimentalForceLongPolling: true,
@@ -23,5 +28,4 @@ db.settings(
   { merge: true }
 );
 
-console.log("🔥 Firestore ingesteld op polling-modus (Safari safe)");
 console.log("🔥 Firebase correct geïnitialiseerd");

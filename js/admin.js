@@ -29,7 +29,7 @@ function initAdmin() {
     <button onclick="nextLevel()">➡ Volgende</button>
     <button onclick="forceCorrect()">✅ Forceer goed</button>
 
-    <button onclick="toggleTestMode()">🧪 Testmodus: UIT</button>
+    <button onclick="toggleTestMode(event)">🧪 Testmodus: UIT</button>
 
     <hr>
     
@@ -209,10 +209,10 @@ async function deleteLevel() {
   alert("🗑️ Level verwijderd");
 }
 
-function toggleTestMode() {
+function toggleTestMode(ev) {
   testMode = !testMode;
 
-  const btn = event.target;
+  const btn = ev?.currentTarget || ev?.target;
   btn.innerText = testMode
     ? "🧪 Testmodus: AAN"
     : "🧪 Testmodus: UIT";

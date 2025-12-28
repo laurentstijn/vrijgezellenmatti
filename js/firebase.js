@@ -20,12 +20,9 @@ if (!firebase.apps.length) {
 const db = firebase.firestore();
 
 // Safari / iOS fix
-db.settings(
-  {
-    experimentalForceLongPolling: true,
-    useFetchStreams: false
-  },
-  { merge: true }
-);
+db.settings({
+  experimentalForceLongPolling: true,
+  useFetchStreams: false
+});
 
 console.log("🔥 Firebase correct geïnitialiseerd");

@@ -1,6 +1,6 @@
 {
-  "name": "De Laatste Code",
-  "short_name": "Laatste Code",
+  "name": "Vrijgezellen Matti",
+  "short_name": "Matti",
   "description": "Interactieve GPS-speurtocht voor een vrijgezellendag",
   "start_url": "./index.html",
   "scope": "./",
@@ -10,12 +10,12 @@
   "theme_color": "#000000",
   "icons": [
     {
-      "src": "assets/icons/icon-001.png",
+      "src": "assets/icons/icon-192.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "assets/icons/icon-001.png",
+      "src": "assets/icons/icon-512.png",
       "sizes": "512x512",
       "type": "image/png"
     }

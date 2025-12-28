@@ -13,6 +13,15 @@ const submitBtn = document.getElementById("submitBtn");
 submitBtn.addEventListener("click", () => submitAnswer(false));
 photoInput.addEventListener("change", () => submitAnswer(false));
 
+function registerServiceWorker() {
+  if (!("serviceWorker" in navigator)) return;
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./sw.js").catch(err => {
+      console.warn("Service worker registratie mislukt:", err);
+    });
+  });
+}
+
 async function loadLevels() {
   const doc = await db.collection("games").doc("default").get();
 
@@ -64,6 +73,12 @@ function showQuestion(level) {
   questionMedia.classList.add("hidden");
   questionMedia.innerHTML = "";
 
+  const requiresPhoto = level.type === "photo";
+  answerInput.classList.toggle("hidden", requiresPhoto);
+  submitBtn.classList.toggle("hidden", requiresPhoto);
+  photoInput.classList.toggle("hidden", !requiresPhoto);
+  photoInput.value = "";
+
   // Vraagtekst
   questionEl.innerText = level.questionText || level.question || "";
 
@@ -89,6 +104,12 @@ function showQuestion(level) {
 function submitAnswer(force = false) {
   const level = levels[currentLevel];
 
+  if (level.type === "photo" && !force) {
+    if (!photoInput.files || photoInput.files.length === 0) {
+      return alert("Neem een foto om verder te gaan");
+    }
+  }
+
   if (level.type !== "photo" && !force) {
     const v = answerInput.value.trim().toLowerCase();
     if (!v) return alert("Vul een antwoord in");
@@ -97,6 +118,7 @@ function submitAnswer(force = false) {
   }
 
   questionBox.classList.add("hidden");
+  photoInput.classList.add("hidden");
   questionShown = false;
   currentLevel++;
 
@@ -113,6 +135,7 @@ function submitAnswer(force = false) {
 
 /* ================= INIT ================= */
 async function init() {
+  registerServiceWorker();
   await loadLevels();
   initAdmin();
   startGPS();

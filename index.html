@@ -1,82 +1,76 @@
 <!DOCTYPE html>
 <html lang="nl">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>De Laatste Code</title>
-  <style>
-    body { font-family: Arial; padding: 20px; }
-    .hidden { display: none; }
-    button { padding: 10px 15px; margin-top: 10px; }
-  </style>
+
+  <!-- Mobile & PWA -->
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#000000" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+  <meta name="apple-mobile-web-app-title" content="Laatste Code" />
+
+  <!-- Manifest -->
+  <link rel="manifest" href="manifest.json" />
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="css/style.css" />
+
+  <!-- Leaflet (kaart) -->
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  />
 </head>
+
 <body>
 
-<h1>🧭 De Laatste Code</h1>
-<p id="status">Ga naar de startlocatie…</p>
+  <h1>🧭 De Laatste Code</h1>
+  <p id="status">Zoek de startlocatie…</p>
 
-<div id="questionBox" class="hidden">
-  <p id="question"></p>
-  <input type="number" id="answer" />
-  <button onclick="submitAnswer()">Bevestig</button>
-</div>
+  <!-- Kaart -->
+  <div id="map"></div>
 
-<script>
-const baseLat = 51.236593;
-const baseLng = 4.4133590;
+  <!-- Vraag -->
+  <div id="questionBox" class="hidden">
+    <p id="question"></p>
+    <input
+      id="answer"
+      type="number"
+      inputmode="numeric"
+      placeholder="Antwoord"
+    />
+    <button id="submitBtn">Bevestig</button>
+  </div>
 
-let step = 0;
-let codes = [];
+  <!-- Foto-opdracht -->
+  <input
+    type="file"
+    id="photoInput"
+    accept="image/*"
+    capture="camera"
+    class="hidden"
+  />
 
-const steps = [
-  { q: "Hoeveel traptreden zie je?", factor: 0.0001 },
-  { q: "Hoeveel letters heeft de partnernaam?", factor: 0.0001 },
-  { q: "Hoeveel woorden tel je in de puzzelzin?", factor: 0.0001 }
-];
+  <!-- Admin -->
+  <div id="adminPanel" class="hidden"></div>
 
-function getDistance(lat1, lon1, lat2, lon2) {
-  return Math.sqrt(
-    Math.pow(lat1-lat2, 2) + Math.pow(lon1-lon2, 2)
-  ) * 111000;
-}
+  <!-- Scripts -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-function checkLocation() {
-  navigator.geolocation.getCurrentPosition(pos => {
-    const d = getDistance(
-      pos.coords.latitude,
-      pos.coords.longitude,
-      baseLat,
-      baseLng
-    );
+  <script src="js/levels.js"></script>
+  <script src="js/gps.js"></script>
+  <script src="js/map.js"></script>
+  <script src="js/admin.js"></script>
+  <script src="js/app.js"></script>
 
-    if (d < 50) {
-      document.getElementById("status").innerText = "Locatie bereikt!";
-      document.getElementById("questionBox").classList.remove("hidden");
-      document.getElementById("question").innerText = steps[step].q;
-    } else {
-      document.getElementById("status").innerText =
-        `Nog ${Math.round(d)} meter lopen…`;
+  <!-- Service worker -->
+  <script>
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("./sw.js");
     }
-  });
-}
-
-function submitAnswer() {
-  const val = parseInt(document.getElementById("answer").value);
-  codes.push(val);
-
-  step++;
-  document.getElementById("answer").value = "";
-  document.getElementById("questionBox").classList.add("hidden");
-
-  if (step < steps.length) {
-    document.getElementById("status").innerText = "Ga naar de volgende locatie…";
-  } else {
-    document.getElementById("status").innerText =
-      "🎉 Code compleet: " + codes.join(" - ");
-  }
-}
-
-setInterval(checkLocation, 3000);
-</script>
+  </script>
 
 </body>
 </html>

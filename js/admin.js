@@ -1,5 +1,6 @@
 const ADMIN_PIN = "1234";
 const GOOGLE_CLIENT_ID = "821755022502-1ljl0f1q5a0bumbqvuafli84tmoksc9j.apps.googleusercontent.com";
+const GOOGLE_DRIVE_FOLDER_ID = "17owb6tmUaG8rCUv9InFYZiPUbIeJ9SCM";
 let adminActive = false;
 let testMode = false;
 let driveToken = "";
@@ -167,7 +168,8 @@ async function uploadToDrive(file) {
 
   const metadata = {
     name: file.name,
-    mimeType: file.type || "application/octet-stream"
+    mimeType: file.type || "application/octet-stream",
+    parents: [GOOGLE_DRIVE_FOLDER_ID]
   };
 
   const boundary = "-------matti-drive-boundary";

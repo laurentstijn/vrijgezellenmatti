@@ -50,6 +50,17 @@ function initAdmin() {
       <option value="photo">Foto</option>
     </select>
 
+    <label>Vraag media</label>
+    <select id="adminQuestionType">
+      <option value="none">Geen</option>
+      <option value="photo">Foto</option>
+      <option value="video">Video</option>
+    </select>
+
+    <label>Media upload</label>
+    <input id="adminMediaFile" type="file">
+    <div id="adminMediaInfo"></div>
+
     <label>Latitude</label>
     <input id="adminLat" type="number" step="any">
 
@@ -60,7 +71,24 @@ function initAdmin() {
     <button onclick="saveLevel()">💾 Opslaan in Firebase</button>
   `;
 
+  const questionTypeSelect = document.getElementById("adminQuestionType");
+  questionTypeSelect.addEventListener("change", updateMediaAccept);
+
   loadAdminFields();
+}
+
+function updateMediaAccept() {
+  const questionType = document.getElementById("adminQuestionType").value;
+  const mediaInput = document.getElementById("adminMediaFile");
+  mediaInput.value = "";
+
+  if (questionType === "photo") {
+    mediaInput.accept = "image/*";
+  } else if (questionType === "video") {
+    mediaInput.accept = "video/*";
+  } else {
+    mediaInput.accept = "";
+  }
 }
 
 function loadAdminFields() {
@@ -68,17 +96,24 @@ function loadAdminFields() {
   const level = levels[currentLevel];
   if (!level) return;
 
-  document.getElementById("adminQuestion").value = level.question || "";
+  document.getElementById("adminQuestion").value = level.questionText || level.question || "";
   document.getElementById("adminAnswer").value = level.answer || "";
   document.getElementById("adminType").value = level.type || "text";
+  document.getElementById("adminQuestionType").value = level.questionType || "none";
   document.getElementById("adminLat").value = level.lat || "";
   document.getElementById("adminLng").value = level.lng || "";
+
+  const mediaInfo = document.getElementById("adminMediaInfo");
+  mediaInfo.innerText = level.mediaUrl ? `Huidige media: ${level.mediaUrl}` : "Geen media";
+  updateMediaAccept();
 }
 
 async function saveLevel() {
   const q = document.getElementById("adminQuestion").value.trim();
   const a = document.getElementById("adminAnswer").value.trim();
   const t = document.getElementById("adminType").value;
+  const qt = document.getElementById("adminQuestionType").value;
+  const mediaInput = document.getElementById("adminMediaFile");
   const lat = parseFloat(document.getElementById("adminLat").value);
   const lng = parseFloat(document.getElementById("adminLng").value);
 
@@ -87,11 +122,24 @@ async function saveLevel() {
     return;
   }
 
+  let mediaUrl = levels[currentLevel]?.mediaUrl || "";
+  if (mediaInput.files && mediaInput.files.length > 0) {
+    const file = mediaInput.files[0];
+    const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+    const path = `uploads/${Date.now()}_${safeName}`;
+    const ref = storage.ref().child(path);
+
+    await ref.put(file);
+    mediaUrl = await ref.getDownloadURL();
+  }
+
   levels[currentLevel] = {
     ...levels[currentLevel],
-    question: q,
+    questionText: q,
     answer: a,
     type: t,
+    questionType: qt === "none" ? "" : qt,
+    mediaUrl: qt === "none" ? "" : mediaUrl,
     lat,
     lng
   };

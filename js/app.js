@@ -87,36 +87,57 @@ function submitAnswer(force = false) {
   const level = levels[currentLevel];
   let userAnswer = "";
 
-  if (level.type !== "photo") {
+  // ================================
+  // FOTO-level → altijd goed
+  // ================================
+  if (level.type === "photo") {
+    userAnswer = "photo";
+  } else {
     userAnswer = answerInput.value.trim().toLowerCase();
 
-    if (!force && !userAnswer) {
+    // Leeg antwoord (alleen blokkeren als niet geforceerd)
+    if (!force && userAnswer === "") {
       alert("Vul een antwoord in");
       return;
     }
 
+    // Fout antwoord (alleen blokkeren als niet geforceerd)
     if (
       !force &&
       level.answer &&
-      userAnswer !== level.answer.toLowerCase()
+      userAnswer !== level.answer.toString().toLowerCase()
     ) {
-      alert("❌ Fout antwoord");
+      alert("❌ Fout antwoord, probeer opnieuw");
       return;
     }
   }
 
+  // ================================
+  // Correct of geforceerd → verder
+  // ================================
   questionBox.classList.add("hidden");
   questionShown = false;
+
+  navigator.vibrate?.(200);
+
   currentLevel++;
 
+  // Admin-form syncen (als admin actief is)
+  if (typeof loadAdminFields === "function") {
+    loadAdminFields();
+  }
+
+  // ================================
+  // Einde spel?
+  // ================================
   if (currentLevel >= levels.length) {
     statusEl.innerText = "🎉 Klaar!";
-    navigator.geolocation.clearWatch(watchId);
     return;
   }
 
   statusEl.innerText = "➡️ Ga naar de volgende locatie…";
 }
+
 
 photoInput.addEventListener("change", () => submitAnswer(false));
 

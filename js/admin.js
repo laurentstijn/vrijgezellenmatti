@@ -44,6 +44,14 @@ function initAdmin() {
     <label>Vraag</label>
     <input id="adminQuestion" type="text">
 
+    <label>Aankomst bericht</label>
+    <input id="adminArriveMessage" type="text">
+
+    <label>
+      <input id="adminVibrateOnArrive" type="checkbox">
+      Trillen bij aankomst
+    </label>
+
     <label>Juiste antwoord</label>
     <input id="adminAnswer" type="text">
 
@@ -150,6 +158,8 @@ function loadAdminFields() {
   if (!level) return;
 
   document.getElementById("adminQuestion").value = level.questionText || level.question || "";
+  document.getElementById("adminArriveMessage").value = level.arriveMessage || "";
+  document.getElementById("adminVibrateOnArrive").checked = !!level.vibrateOnArrive;
   document.getElementById("adminAnswer").value = level.answer || "";
   document.getElementById("adminType").value = level.type || "text";
   document.getElementById("adminQuestionType").value = level.questionType || "none";
@@ -244,6 +254,8 @@ async function uploadToDrive(file, questionType) {
 
 async function saveLevel() {
   const q = document.getElementById("adminQuestion").value.trim();
+  const arriveMessage = document.getElementById("adminArriveMessage").value.trim();
+  const vibrateOnArrive = document.getElementById("adminVibrateOnArrive").checked;
   const a = document.getElementById("adminAnswer").value.trim();
   const t = document.getElementById("adminType").value;
   const qt = document.getElementById("adminQuestionType").value;
@@ -270,6 +282,8 @@ async function saveLevel() {
   levels[currentLevel] = {
     ...levels[currentLevel],
     questionText: q,
+    arriveMessage,
+    vibrateOnArrive,
     answer: a,
     type: t,
     questionType: qt === "none" ? "" : qt,

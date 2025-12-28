@@ -2,6 +2,7 @@ let currentLevel = 0;
 let questionShown = false;
 let watchId = null;
 let lastDistance = Infinity;
+const notifiedLevels = new Set();
 
 const questionMedia = document.getElementById("questionMedia");
 const statusEl = document.getElementById("status");
@@ -58,7 +59,18 @@ function onLocation(pos) {
   lastDistance = d;
 
   if (d <= RADIUS_METERS || testMode) {
-    statusEl.innerText = "📍 Locatie bereikt!";
+    const arriveMessage = level.arriveMessage ? level.arriveMessage.trim() : "";
+    if (!notifiedLevels.has(currentLevel)) {
+      statusEl.innerText = arriveMessage
+        ? `📍 ${arriveMessage}`
+        : "📍 Locatie bereikt!";
+      if (level.vibrateOnArrive && navigator.vibrate) {
+        navigator.vibrate([200, 100, 200]);
+      }
+      notifiedLevels.add(currentLevel);
+    } else {
+      statusEl.innerText = "📍 Locatie bereikt!";
+    }
     showQuestion(level);
   } else {
     questionShown = false;

@@ -12,6 +12,11 @@ function initAdmin() {
   }
 
   adminActive = true;
+  // Verberg speler-interface in admin-modus
+    const playerUI = document.getElementById("playerUI");
+    if (playerUI) {
+      playerUI.style.display = "none";
+    }
 
   const panel = document.getElementById("adminPanel");
   panel.classList.remove("hidden");

@@ -11,6 +11,15 @@ async function loadLevels() {
   }
 }
 
+function startGPS() {
+  navigator.geolocation.watchPosition(
+    onLocationUpdate,
+    onLocationError,
+    { enableHighAccuracy: true }
+  );
+}
+
+
 // ================================
 // App state
 // ================================

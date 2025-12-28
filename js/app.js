@@ -1,4 +1,16 @@
-//alert("APP.JS WORDT NU GELADEN");
+async function loadLevels() {
+  const doc = await db.collection("games").doc("default").get();
+
+  if (doc.exists) {
+    levels = doc.data().levels;
+    console.log("Levels geladen uit Firebase");
+  } else {
+    // Eerste keer: initieel opslaan
+    await db.collection("games").doc("default").set({ levels });
+    console.log("Levels opgeslagen in Firebase");
+  }
+}
+
 // ================================
 // App state
 // ================================

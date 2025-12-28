@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <title>De Laatste Code</title>
+  <style>
+    body { font-family: Arial; padding: 20px; }
+    .hidden { display: none; }
+    button { padding: 10px 15px; margin-top: 10px; }
+  </style>
+</head>
+<body>
+
+<h1>🧭 De Laatste Code</h1>
+<p id="status">Ga naar de startlocatie…</p>
+
+<div id="questionBox" class="hidden">
+  <p id="question"></p>
+  <input type="number" id="answer" />
+  <button onclick="submitAnswer()">Bevestig</button>
+</div>
+
+<script>
+const baseLat = 51.2365234;
+const baseLng = 4.4138794;
+
+let step = 0;
+let codes = [];
+
+const steps = [
+  { q: "Hoeveel traptreden zie je?", factor: 0.0001 },
+  { q: "Hoeveel letters heeft de partnernaam?", factor: 0.0001 },
+  { q: "Hoeveel woorden tel je in de puzzelzin?", factor: 0.0001 }
+];
+
+function getDistance(lat1, lon1, lat2, lon2) {
+  return Math.sqrt(
+    Math.pow(lat1-lat2, 2) + Math.pow(lon1-lon2, 2)
+  ) * 111000;
+}
+
+function checkLocation() {
+  navigator.geolocation.getCurrentPosition(pos => {
+    const d = getDistance(
+      pos.coords.latitude,
+      pos.coords.longitude,
+      baseLat,
+      baseLng
+    );
+
+    if (d < 30) {
+      document.getElementById("status").innerText = "Locatie bereikt!";
+      document.getElementById("questionBox").classList.remove("hidden");
+      document.getElementById("question").innerText = steps[step].q;
+    } else {
+      document.getElementById("status").innerText =
+        `Nog ${Math.round(d)} meter lopen…`;
+    }
+  });
+}
+
+function submitAnswer() {
+  const val = parseInt(document.getElementById("answer").value);
+  codes.push(val);
+
+  step++;
+  document.getElementById("answer").value = "";
+  document.getElementById("questionBox").classList.add("hidden");
+
+  if (step < steps.length) {
+    document.getElementById("status").innerText = "Ga naar de volgende locatie…";
+  } else {
+    document.getElementById("status").innerText =
+      "🎉 Code compleet: " + codes.join(" - ");
+  }
+}
+
+setInterval(checkLocation, 3000);
+</script>
+
+</body>
+</html>

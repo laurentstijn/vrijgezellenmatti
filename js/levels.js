@@ -2,8 +2,8 @@ const levels = [
   {
     lat: 51.236593,
     lng: 4.413590,
-    type: "number",
-    question: "Hoeveel traptreden zie je?"
+    type: "text",
+    question: "Op welke boot zit je?"
   },
   {
     lat: 51.236593,

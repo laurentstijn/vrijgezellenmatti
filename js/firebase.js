@@ -18,7 +18,6 @@ if (!firebase.apps.length) {
 }
 
 const db = firebase.firestore();
-const storage = firebase.storage();
 
 // Safari / iOS fix
 db.settings({

@@ -1,6 +1,9 @@
 const ADMIN_PIN = "1234";
+const GOOGLE_CLIENT_ID = "821755022502-1ljl0f1q5a0bumbqvuafli84tmoksc9j.apps.googleusercontent.com";
 let adminActive = false;
 let testMode = false;
+let driveToken = "";
+let tokenClient = null;
 
 function initAdmin() {
   const params = new URLSearchParams(window.location.search);
@@ -57,7 +60,11 @@ function initAdmin() {
       <option value="video">Video</option>
     </select>
 
-    <label>Media upload</label>
+    <label>Google Drive</label>
+    <button id="adminDriveLogin" type="button">🔐 Login Google Drive</button>
+    <div id="adminDriveStatus">Niet verbonden</div>
+
+    <label>Media upload (Drive)</label>
     <input id="adminMediaFile" type="file">
     <div id="adminMediaInfo"></div>
 
@@ -74,7 +81,52 @@ function initAdmin() {
   const questionTypeSelect = document.getElementById("adminQuestionType");
   questionTypeSelect.addEventListener("change", updateMediaAccept);
 
+  const driveLoginBtn = document.getElementById("adminDriveLogin");
+  driveLoginBtn.addEventListener("click", requestDriveAuth);
+
+  initDriveAuth();
   loadAdminFields();
+}
+
+function initDriveAuth() {
+  if (!window.google || !google.accounts || !google.accounts.oauth2) {
+    setTimeout(initDriveAuth, 200);
+    return;
+  }
+
+  tokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: GOOGLE_CLIENT_ID,
+    scope: "https://www.googleapis.com/auth/drive.file",
+    callback: resp => {
+      driveToken = resp?.access_token || "";
+      updateDriveStatus();
+    }
+  });
+
+  updateDriveStatus();
+}
+
+function updateDriveStatus() {
+  const statusEl = document.getElementById("adminDriveStatus");
+  const loginBtn = document.getElementById("adminDriveLogin");
+  if (!statusEl || !loginBtn) return;
+
+  if (driveToken) {
+    statusEl.innerText = "Verbonden met Google Drive";
+    loginBtn.innerText = "✅ Drive verbonden";
+  } else {
+    statusEl.innerText = "Niet verbonden";
+    loginBtn.innerText = "🔐 Login Google Drive";
+  }
+}
+
+function requestDriveAuth() {
+  if (!tokenClient) {
+    alert("Google login is nog niet klaar, probeer zo opnieuw.");
+    return;
+  }
+
+  tokenClient.requestAccessToken({ prompt: "consent" });
 }
 
 function updateMediaAccept() {
@@ -108,6 +160,78 @@ function loadAdminFields() {
   updateMediaAccept();
 }
 
+async function uploadToDrive(file) {
+  if (!driveToken) {
+    throw new Error("Niet ingelogd op Google Drive.");
+  }
+
+  const metadata = {
+    name: file.name,
+    mimeType: file.type || "application/octet-stream"
+  };
+
+  const boundary = "-------matti-drive-boundary";
+  const delimiter = `\r\n--${boundary}\r\n`;
+  const closeDelim = `\r\n--${boundary}--`;
+
+  const fileBuffer = await file.arrayBuffer();
+  const multipartBody = new Blob(
+    [
+      delimiter,
+      "Content-Type: application/json; charset=UTF-8\r\n\r\n",
+      JSON.stringify(metadata),
+      delimiter,
+      `Content-Type: ${metadata.mimeType}\r\n\r\n`,
+      fileBuffer,
+      closeDelim
+    ],
+    { type: `multipart/related; boundary=${boundary}` }
+  );
+
+  const uploadRes = await fetch(
+    "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id",
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${driveToken}`
+      },
+      body: multipartBody
+    }
+  );
+
+  if (!uploadRes.ok) {
+    const errText = await uploadRes.text();
+    throw new Error(errText || "Drive upload mislukt.");
+  }
+
+  const { id } = await uploadRes.json();
+  if (!id) {
+    throw new Error("Drive upload zonder bestand-id.");
+  }
+
+  const permRes = await fetch(
+    `https://www.googleapis.com/drive/v3/files/${id}/permissions`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${driveToken}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        role: "reader",
+        type: "anyone"
+      })
+    }
+  );
+
+  if (!permRes.ok) {
+    const errText = await permRes.text();
+    throw new Error(errText || "Drive permissions mislukt.");
+  }
+
+  return `https://drive.google.com/uc?export=download&id=${id}`;
+}
+
 async function saveLevel() {
   const q = document.getElementById("adminQuestion").value.trim();
   const a = document.getElementById("adminAnswer").value.trim();
@@ -123,14 +247,14 @@ async function saveLevel() {
   }
 
   let mediaUrl = levels[currentLevel]?.mediaUrl || "";
-  if (mediaInput.files && mediaInput.files.length > 0) {
+  if (qt !== "none" && mediaInput.files && mediaInput.files.length > 0) {
     const file = mediaInput.files[0];
-    const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-    const path = `uploads/${Date.now()}_${safeName}`;
-    const ref = storage.ref().child(path);
-
-    await ref.put(file);
-    mediaUrl = await ref.getDownloadURL();
+    try {
+      mediaUrl = await uploadToDrive(file);
+    } catch (err) {
+      alert(`❌ Upload mislukt: ${err.message || err}`);
+      return;
+    }
   }
 
   levels[currentLevel] = {

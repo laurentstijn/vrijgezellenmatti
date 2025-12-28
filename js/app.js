@@ -86,14 +86,33 @@ function showQuestion(level) {
   questionEl.innerText = level.question;
   questionBox.classList.remove("hidden");
 
-  // Reset invoer
+  // Reset
   answerInput.value = "";
-  answerInput.classList.toggle("hidden", level.type === "photo");
-  photoInput.classList.toggle("hidden", level.type !== "photo");
 
-  // Foto-opdracht → camera openen
+  // FOTO-opdracht
   if (level.type === "photo") {
+    answerInput.classList.add("hidden");
+    photoInput.classList.remove("hidden");
     photoInput.click();
+    return;
+  }
+
+  // TEKST-vraag
+  if (level.type === "text") {
+    answerInput.type = "text";
+    answerInput.placeholder = "Typ je antwoord";
+    answerInput.classList.remove("hidden");
+    photoInput.classList.add("hidden");
+    return;
+  }
+
+  // CIJFER-vraag (default)
+  if (level.type === "number") {
+    answerInput.type = "number";
+    answerInput.placeholder = "Antwoord (cijfer)";
+    answerInput.classList.remove("hidden");
+    photoInput.classList.add("hidden");
+    return;
   }
 }
 

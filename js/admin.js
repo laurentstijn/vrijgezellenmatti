@@ -218,8 +218,15 @@ function toggleTestMode() {
     : "🧪 Testmodus: UIT";
 
   if (testMode) {
+    if (watchId) {
+      navigator.geolocation.clearWatch(watchId);
+      watchId = null;
+    }
     statusEl.innerText = "🧪 Testmodus actief (GPS uit)";
     questionShown = false;
     showQuestion(levels[currentLevel]);
+  } else {
+    statusEl.innerText = "➡️ GPS weer actief";
+    startGPS();
   }
 }

@@ -1,16 +1,14 @@
 // ================================
 // Admin configuratie
 // ================================
-const ADMIN_PIN = "1234"; // 👈 pas aan indien gewenst
+const ADMIN_PIN = "1234"; // ← pas aan indien gewenst
 let adminActive = false;
 
 // ================================
-// Init admin (wordt aangeroepen vanuit app.js)
+// Init admin
 // ================================
 function initAdmin() {
   const params = new URLSearchParams(window.location.search);
-
-  // Alleen admin-modus als ?admin=1
   if (params.get("admin") !== "1") return;
 
   const pin = prompt("Admin pincode?");
@@ -26,17 +24,56 @@ function initAdmin() {
 
   panel.innerHTML = `
     <h2>🔧 Admin</h2>
-    <p>Admin-modus actief</p>
 
-    <button onclick="prevLevel()">⬅ Vorige vraag</button>
-    <button onclick="nextLevel()">➡ Volgende vraag</button>
+    <button onclick="prevLevel()">⬅ Vorige</button>
+    <button onclick="nextLevel()">➡ Volgende</button>
     <button onclick="forceCorrect()">✅ Forceer goed</button>
-    <button onclick="showCurrent()">ℹ Huidige vraag</button>
+
+    <hr>
+
+    <label>Vraag</label>
+    <input id="adminQuestion" type="text">
+
+    <label>Juiste antwoord</label>
+    <input id="adminAnswer" type="text">
+
+    <button onclick="saveQuestion()">💾 Opslaan</button>
   `;
+
+  loadAdminFields();
 }
 
 // ================================
-// Admin acties
+// Admin helpers
+// ================================
+function loadAdminFields() {
+  if (!adminActive) return;
+
+  const level = levels[currentLevel];
+  document.getElementById("adminQuestion").value = level.question || "";
+  document.getElementById("adminAnswer").value = level.answer || "";
+}
+
+function saveQuestion() {
+  if (!adminActive) return;
+
+  const q = document.getElementById("adminQuestion").value.trim();
+  const a = document.getElementById("adminAnswer").value.trim();
+
+  if (!q) {
+    alert("Vraag mag niet leeg zijn");
+    return;
+  }
+
+  levels[currentLevel].question = q;
+  levels[currentLevel].answer = a;
+
+  questionShown = false;
+  alert("✅ Vraag opgeslagen");
+}
+
+// ================================
+// Navigatie
 // ================================
 function nextLevel() {
   if (!adminActive) return;
@@ -44,9 +81,7 @@ function nextLevel() {
   if (currentLevel < levels.length - 1) {
     currentLevel++;
     questionShown = false;
-    alert("➡ Naar level " + currentLevel);
-  } else {
-    alert("Dit is het laatste level");
+    loadAdminFields();
   }
 }
 
@@ -56,26 +91,11 @@ function prevLevel() {
   if (currentLevel > 0) {
     currentLevel--;
     questionShown = false;
-    alert("⬅ Terug naar level " + currentLevel);
-  } else {
-    alert("Dit is het eerste level");
+    loadAdminFields();
   }
 }
 
 function forceCorrect() {
   if (!adminActive) return;
-
-  alert("✅ Admin: antwoord geforceerd");
   submitAnswer();
-}
-
-function showCurrent() {
-  if (!adminActive) return;
-
-  const level = levels[currentLevel];
-  alert(
-    `Level: ${currentLevel + 1}/${levels.length}\n\n` +
-    `Type: ${level.type}\n` +
-    `Vraag: ${level.question}`
-  );
 }

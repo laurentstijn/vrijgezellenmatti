@@ -161,7 +161,14 @@ function loadAdminFields() {
   updateMediaAccept();
 }
 
-async function uploadToDrive(file) {
+function driveMediaUrl(id, isImage) {
+  if (isImage) {
+    return `https://drive.google.com/thumbnail?id=${id}&sz=w1200`;
+  }
+  return `https://drive.google.com/uc?export=download&id=${id}`;
+}
+
+async function uploadToDrive(file, questionType) {
   if (!driveToken) {
     throw new Error("Niet ingelogd op Google Drive.");
   }
@@ -231,7 +238,8 @@ async function uploadToDrive(file) {
     throw new Error(errText || "Drive permissions mislukt.");
   }
 
-  return `https://drive.google.com/uc?export=download&id=${id}`;
+  const isImage = questionType === "photo" || file.type.startsWith("image/");
+  return driveMediaUrl(id, isImage);
 }
 
 async function saveLevel() {
@@ -252,7 +260,7 @@ async function saveLevel() {
   if (qt !== "none" && mediaInput.files && mediaInput.files.length > 0) {
     const file = mediaInput.files[0];
     try {
-      mediaUrl = await uploadToDrive(file);
+      mediaUrl = await uploadToDrive(file, qt);
     } catch (err) {
       alert(`❌ Upload mislukt: ${err.message || err}`);
       return;

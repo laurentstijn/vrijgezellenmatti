@@ -73,8 +73,10 @@ function normalizeMediaUrl(url, mediaType) {
     const idMatch = url.match(/[?&]id=([^&]+)/);
     const id = (fileMatch && fileMatch[1]) || (idMatch && idMatch[1]);
     if (id) {
-      const exportType = mediaType === "video" ? "download" : "view";
-      return `https://drive.google.com/uc?export=${exportType}&id=${id}`;
+      if (mediaType === "photo") {
+        return `https://drive.google.com/thumbnail?id=${id}&sz=w1200`;
+      }
+      return `https://drive.google.com/uc?export=download&id=${id}`;
     }
   }
 

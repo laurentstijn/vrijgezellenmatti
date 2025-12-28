@@ -1,3 +1,4 @@
+alert("NIEUWE LEVELS.JS");
 const levels = [
   {
     lat: 51.236593,

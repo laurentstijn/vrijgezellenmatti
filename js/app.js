@@ -1,5 +1,6 @@
 let currentLevel = 0;
 let questionShown = false;
+let watchId = null;
 
 const statusEl = document.getElementById("status");
 const questionBox = document.getElementById("questionBox");
@@ -22,6 +23,47 @@ async function loadLevels() {
   }
 }
 
+/* ================================
+   GPS
+================================ */
+function startGPS() {
+  if (!navigator.geolocation) {
+    statusEl.innerText = "❌ GPS niet ondersteund";
+    return;
+  }
+
+  watchId = navigator.geolocation.watchPosition(
+    onLocation,
+    onLocationError,
+    { enableHighAccuracy: true }
+  );
+}
+
+function onLocation(pos) {
+  const level = levels[currentLevel];
+  if (!level) return;
+
+  const lat = pos.coords.latitude;
+  const lng = pos.coords.longitude;
+
+  const d = distanceInMeters(lat, lng, level.lat, level.lng);
+
+  if (d <= RADIUS_METERS) {
+    statusEl.innerText = "📍 Locatie bereikt!";
+    showQuestion(level);
+  } else {
+    questionShown = false;
+    statusEl.innerText = `Nog ${Math.round(d)} meter…`;
+  }
+}
+
+function onLocationError(err) {
+  statusEl.innerText = "❌ GPS-fout: " + err.message;
+}
+
+/* ================================
+   Vragen
+================================ */
 function showQuestion(level) {
   if (questionShown) return;
   questionShown = true;
@@ -58,7 +100,7 @@ function submitAnswer(force = false) {
       level.answer &&
       userAnswer !== level.answer.toLowerCase()
     ) {
-      alert("Fout antwoord");
+      alert("❌ Fout antwoord");
       return;
     }
   }
@@ -69,6 +111,7 @@ function submitAnswer(force = false) {
 
   if (currentLevel >= levels.length) {
     statusEl.innerText = "🎉 Klaar!";
+    navigator.geolocation.clearWatch(watchId);
     return;
   }
 
@@ -77,10 +120,13 @@ function submitAnswer(force = false) {
 
 photoInput.addEventListener("change", () => submitAnswer(false));
 
+/* ================================
+   INIT
+================================ */
 async function init() {
   await loadLevels();
   initAdmin();
-  statusEl.innerText = "📍 Klaar om te starten";
+  startGPS();
 }
 
 init();

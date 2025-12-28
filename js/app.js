@@ -34,6 +34,8 @@ statusEl.innerText = "Zoek de startlocatie…";
 
 submitBtn.addEventListener("click", submitAnswer);
 
+await loadLevels();
+
 // ================================
 // GPS tracking
 // ================================

@@ -3,6 +3,7 @@ let questionShown = false;
 let watchId = null;
 let lastDistance = Infinity;
 const notifiedLevels = new Set();
+let pendingLevel = null;
 
 const questionMedia = document.getElementById("questionMedia");
 const statusEl = document.getElementById("status");
@@ -11,6 +12,13 @@ const questionEl = document.getElementById("question");
 const answerInput = document.getElementById("answer");
 const photoInput = document.getElementById("photoInput");
 const submitBtn = document.getElementById("submitBtn");
+
+statusEl.addEventListener("click", () => {
+  if (!pendingLevel) return;
+  showQuestion(pendingLevel);
+  pendingLevel = null;
+  statusEl.classList.remove("actionable");
+});
 
 submitBtn.addEventListener("click", () => submitAnswer(false));
 photoInput.addEventListener("change", () => submitAnswer(false));
@@ -59,21 +67,30 @@ function onLocation(pos) {
   lastDistance = d;
 
   if (d <= RADIUS_METERS || testMode) {
+    if (testMode) {
+      statusEl.innerText = "🧪 Testmodus actief (GPS uit)";
+      showQuestion(level);
+      return;
+    }
+
     const arriveMessage = level.arriveMessage ? level.arriveMessage.trim() : "";
     if (!notifiedLevels.has(currentLevel)) {
       statusEl.innerText = arriveMessage
-        ? `📍 ${arriveMessage}`
-        : "📍 Locatie bereikt!";
+        ? `📍 ${arriveMessage} (tik om verder te gaan)`
+        : "📍 Locatie bereikt! (tik om verder te gaan)";
       if (level.vibrateOnArrive && navigator.vibrate) {
         navigator.vibrate([200, 100, 200]);
       }
       notifiedLevels.add(currentLevel);
     } else {
-      statusEl.innerText = "📍 Locatie bereikt!";
+      statusEl.innerText = "📍 Locatie bereikt! (tik om verder te gaan)";
     }
-    showQuestion(level);
+    pendingLevel = level;
+    statusEl.classList.add("actionable");
   } else {
     questionShown = false;
+    pendingLevel = null;
+    statusEl.classList.remove("actionable");
     statusEl.innerText = `Nog ${Math.round(d)} meter…`;
     questionBox.classList.add("hidden");
     questionMedia.classList.add("hidden");

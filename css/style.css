@@ -30,3 +30,8 @@ input {
 .hidden {
   display: none;
 }
+
+.actionable {
+  cursor: pointer;
+  text-decoration: underline;
+}

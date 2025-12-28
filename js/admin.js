@@ -437,6 +437,7 @@ async function moveLevelUp() {
   if (!adminActive) return;
   if (currentLevel <= 0) return;
 
+  console.log("⬆️ Move up", { from: currentLevel, to: currentLevel - 1 });
   const temp = levels[currentLevel - 1];
   levels[currentLevel - 1] = levels[currentLevel];
   levels[currentLevel] = temp;
@@ -459,6 +460,7 @@ async function moveLevelDown() {
   if (!adminActive) return;
   if (currentLevel >= levels.length - 1) return;
 
+  console.log("⬇️ Move down", { from: currentLevel, to: currentLevel + 1 });
   const temp = levels[currentLevel + 1];
   levels[currentLevel + 1] = levels[currentLevel];
   levels[currentLevel] = temp;

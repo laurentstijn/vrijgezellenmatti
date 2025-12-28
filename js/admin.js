@@ -6,6 +6,8 @@ let testMode = false;
 let driveToken = "";
 let tokenClient = null;
 let openLevelIndex = null;
+let dragFromIndex = null;
+let dragOverIndex = null;
 
 function initAdmin() {
   const params = new URLSearchParams(window.location.search);
@@ -65,14 +67,6 @@ function initAdmin() {
         deleteLevelByIndex(idx);
         return;
       }
-      if (event.target.closest(".admin-move-up")) {
-        if (idx > 0) reorderLevels(idx, idx - 1);
-        return;
-      }
-      if (event.target.closest(".admin-move-down")) {
-        if (idx < levels.length - 1) reorderLevels(idx, idx + 1);
-        return;
-      }
       if (event.target.closest(".admin-save-level")) {
         saveLevelByIndex(idx);
         return;
@@ -81,11 +75,7 @@ function initAdmin() {
         useCurrentLocationForIndex(idx);
         return;
       }
-      if (event.target.closest(".admin-select-level")) {
-        setCurrentLevel(idx);
-        return;
-      }
-      if (event.target.closest(".admin-accordion-toggle") || event.target.closest(".admin-list-title")) {
+      if (event.target.closest(".admin-accordion-toggle") || event.target.closest(".admin-list-title") || event.target.closest(".admin-list-header")) {
         toggleLevelOpen(idx);
         return;
       }
@@ -98,34 +88,77 @@ function initAdmin() {
       updateMediaAcceptForItem(item);
     });
 
-    listEl.addEventListener("dragstart", event => {
-      const handle = event.target.closest(".admin-drag-handle");
-      if (!handle) return;
+    const startDrag = (target, clientX, clientY) => {
+      const handle = target.closest(".admin-drag-handle");
+      if (!handle) return false;
       const item = handle.closest(".admin-list-item");
-      if (!item) return;
-      event.dataTransfer.effectAllowed = "move";
-      event.dataTransfer.setData("text/plain", item.dataset.index);
+      if (!item) return false;
+      dragFromIndex = parseInt(item.dataset.index, 10);
+      if (Number.isNaN(dragFromIndex)) return false;
+      dragOverIndex = dragFromIndex;
       listEl.classList.add("dragging");
-    });
+      updateDragOver(clientX, clientY);
+      return true;
+    };
 
-    listEl.addEventListener("dragover", event => {
-      event.preventDefault();
-      event.dataTransfer.dropEffect = "move";
-    });
-
-    listEl.addEventListener("drop", event => {
-      event.preventDefault();
-      const item = event.target.closest(".admin-list-item");
+    const updateDragOver = (clientX, clientY) => {
+      const el = document.elementFromPoint(clientX, clientY);
+      const item = el?.closest(".admin-list-item");
       if (!item) return;
-      const from = parseInt(event.dataTransfer.getData("text/plain"), 10);
-      const to = parseInt(item.dataset.index, 10);
-      if (Number.isNaN(from) || Number.isNaN(to) || from === to) return;
-      reorderLevels(from, to);
+      const idx = parseInt(item.dataset.index, 10);
+      if (Number.isNaN(idx)) return;
+      if (dragOverIndex !== null && dragOverIndex !== idx) {
+        const prev = listEl.querySelector(`.admin-list-item[data-index="${dragOverIndex}"]`);
+        prev?.classList.remove("drag-over");
+      }
+      dragOverIndex = idx;
+      item.classList.add("drag-over");
+    };
+
+    const endDrag = () => {
+      if (dragFromIndex === null) return;
+      const from = dragFromIndex;
+      const to = dragOverIndex;
+      const prev = listEl.querySelector(`.admin-list-item[data-index="${dragOverIndex}"]`);
+      prev?.classList.remove("drag-over");
+      dragFromIndex = null;
+      dragOverIndex = null;
+      listEl.classList.remove("dragging");
+      if (to !== null && from !== to) {
+        reorderLevels(from, to);
+      }
+    };
+
+    listEl.addEventListener("pointerdown", event => {
+      if (startDrag(event.target, event.clientX, event.clientY)) {
+        event.preventDefault();
+      }
     });
 
-    listEl.addEventListener("dragend", () => {
-      listEl.classList.remove("dragging");
+    listEl.addEventListener("pointermove", event => {
+      if (dragFromIndex === null) return;
+      updateDragOver(event.clientX, event.clientY);
     });
+
+    listEl.addEventListener("pointerup", endDrag);
+    listEl.addEventListener("pointercancel", endDrag);
+
+    listEl.addEventListener("touchstart", event => {
+      const touch = event.touches[0];
+      if (!touch) return;
+      if (startDrag(event.target, touch.clientX, touch.clientY)) {
+        event.preventDefault();
+      }
+    }, { passive: false });
+
+    listEl.addEventListener("touchmove", event => {
+      if (dragFromIndex === null) return;
+      const touch = event.touches[0];
+      if (!touch) return;
+      updateDragOver(touch.clientX, touch.clientY);
+    });
+
+    listEl.addEventListener("touchend", endDrag);
   }
 
   initDriveAuth();
@@ -237,14 +270,9 @@ function renderLevelList() {
     return `
       <div class="admin-list-item ${activeClass} ${openClass}" data-index="${index}">
         <div class="admin-list-header">
-          <span class="admin-drag-handle" draggable="true" aria-label="Sleep om te verplaatsen">≡</span>
+          <span class="admin-drag-handle" aria-label="Sleep om te verplaatsen">≡</span>
           <button class="admin-accordion-toggle" type="button">#${index + 1}</button>
           <span class="admin-list-title">${escapeHtml(shortTitle)}</span>
-          <div class="admin-list-controls">
-            <button class="admin-move-up" type="button">⬆️</button>
-            <button class="admin-move-down" type="button">⬇️</button>
-            <button class="admin-select-level" type="button">Selecteer</button>
-          </div>
         </div>
         <div class="admin-accordion-body ${bodyClass}">
           <label>Vraag</label>

@@ -26,10 +26,10 @@ function initAdmin() {
     <hr>
 
     <label>Vraag</label>
-    <input id="adminQuestion" type="text" />
+    <input id="adminQuestion" type="text">
 
     <label>Juiste antwoord</label>
-    <input id="adminAnswer" type="text" />
+    <input id="adminAnswer" type="text">
 
     <label>Type</label>
     <select id="adminType">
@@ -39,10 +39,10 @@ function initAdmin() {
     </select>
 
     <label>Latitude</label>
-    <input id="adminLat" type="number" step="any" />
+    <input id="adminLat" type="number" step="any">
 
     <label>Longitude</label>
-    <input id="adminLng" type="number" step="any" />
+    <input id="adminLng" type="number" step="any">
 
     <button onclick="saveLevel()">💾 Opslaan in Firebase</button>
   `;
@@ -50,12 +50,8 @@ function initAdmin() {
   loadAdminFields();
 }
 
-/* ================================
-   Admin helpers
-================================ */
 function loadAdminFields() {
   if (!adminActive) return;
-
   const level = levels[currentLevel];
   if (!level) return;
 
@@ -67,8 +63,6 @@ function loadAdminFields() {
 }
 
 async function saveLevel() {
-  if (!adminActive) return;
-
   const q = document.getElementById("adminQuestion").value.trim();
   const a = document.getElementById("adminAnswer").value.trim();
   const t = document.getElementById("adminType").value;
@@ -76,7 +70,7 @@ async function saveLevel() {
   const lng = parseFloat(document.getElementById("adminLng").value);
 
   if (!q || isNaN(lat) || isNaN(lng)) {
-    alert("❌ Vraag + geldige locatie zijn verplicht");
+    alert("❌ Vraag + geldige locatie verplicht");
     return;
   }
 
@@ -94,15 +88,10 @@ async function saveLevel() {
     { merge: true }
   );
 
-  questionShown = false;
-  alert("✅ Level opgeslagen in Firebase");
+  alert("✅ Level opgeslagen");
 }
 
-/* ================================
-   Navigatie
-================================ */
 function nextLevel() {
-  if (!adminActive) return;
   if (currentLevel < levels.length - 1) {
     currentLevel++;
     questionShown = false;
@@ -111,7 +100,6 @@ function nextLevel() {
 }
 
 function prevLevel() {
-  if (!adminActive) return;
   if (currentLevel > 0) {
     currentLevel--;
     questionShown = false;
@@ -120,6 +108,5 @@ function prevLevel() {
 }
 
 function forceCorrect() {
-  if (!adminActive) return;
   submitAnswer(true);
 }

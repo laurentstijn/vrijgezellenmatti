@@ -6,6 +6,9 @@ let lastPosition = null;
 const notifiedLevels = new Set();
 const notifiedNotificationLevels = new Set();
 let pendingNotificationLevelIndex = null;
+let compassHeading = null;
+let compassEnabled = false;
+let compassStarted = false;
 
 const questionMedia = document.getElementById("questionMedia");
 const statusEl = document.getElementById("status");
@@ -14,6 +17,9 @@ const questionEl = document.getElementById("question");
 const answerInput = document.getElementById("answer");
 const photoInput = document.getElementById("photoInput");
 const submitBtn = document.getElementById("submitBtn");
+const compassEl = document.getElementById("compass");
+const compassArrowEl = document.getElementById("compassArrow");
+const enableCompassBtn = document.getElementById("enableCompass");
 const enableNotificationsBtn = document.getElementById("enableNotifications");
 
 if (enableNotificationsBtn) {
@@ -32,6 +38,23 @@ if (enableNotificationsBtn) {
 
 submitBtn.addEventListener("click", () => submitAnswer(false));
 photoInput.addEventListener("change", () => submitAnswer(false));
+
+if (enableCompassBtn) {
+  enableCompassBtn.addEventListener("click", async () => {
+    if (!("DeviceOrientationEvent" in window)) return;
+    try {
+      if (typeof DeviceOrientationEvent.requestPermission === "function") {
+        const result = await DeviceOrientationEvent.requestPermission();
+        if (result !== "granted") return;
+      }
+      compassEnabled = true;
+      enableCompassBtn.classList.add("hidden");
+      startCompass();
+    } catch (_) {
+      // Ignore permission errors
+    }
+  });
+}
 
 function registerServiceWorker() {
   if (!("serviceWorker" in navigator)) return;
@@ -118,6 +141,72 @@ async function loadLevels() {
   }
 }
 
+function updateCompassUI() {
+  if (!compassEl) return;
+  if (!("DeviceOrientationEvent" in window)) {
+    compassEl.classList.add("hidden");
+    if (enableCompassBtn) enableCompassBtn.classList.add("hidden");
+    return;
+  }
+  if (typeof DeviceOrientationEvent.requestPermission === "function" && !compassEnabled) {
+    if (enableCompassBtn) enableCompassBtn.classList.remove("hidden");
+    compassEl.classList.add("hidden");
+    return;
+  }
+  compassEl.classList.remove("hidden");
+}
+
+function startCompass() {
+  if (compassStarted || !("DeviceOrientationEvent" in window)) return;
+  compassStarted = true;
+  window.addEventListener("deviceorientation", onDeviceOrientation, true);
+}
+
+function onDeviceOrientation(event) {
+  if (event.webkitCompassHeading != null) {
+    compassHeading = event.webkitCompassHeading;
+  } else if (event.alpha != null) {
+    compassHeading = 360 - event.alpha;
+  }
+  updateCompassArrow();
+}
+
+function bearingDegrees(lat1, lon1, lat2, lon2) {
+  const toRad = d => (d * Math.PI) / 180;
+  const toDeg = r => (r * 180) / Math.PI;
+  const phi1 = toRad(lat1);
+  const phi2 = toRad(lat2);
+  const dLon = toRad(lon2 - lon1);
+  const y = Math.sin(dLon) * Math.cos(phi2);
+  const x = Math.cos(phi1) * Math.sin(phi2) -
+    Math.sin(phi1) * Math.cos(phi2) * Math.cos(dLon);
+  return (toDeg(Math.atan2(y, x)) + 360) % 360;
+}
+
+function updateCompassArrow() {
+  if (!compassEl || !compassArrowEl) return;
+  if (!lastPosition || compassHeading == null) return;
+  const level = levels[currentLevel];
+  if (!level || typeof level.lat !== "number" || typeof level.lng !== "number") return;
+
+  const bearing = bearingDegrees(
+    lastPosition.coords.latitude,
+    lastPosition.coords.longitude,
+    level.lat,
+    level.lng
+  );
+
+  let rotation = bearing - compassHeading;
+  if (rotation < 0) rotation += 360;
+  compassArrowEl.style.transform = `rotate(${rotation}deg)`;
+
+  if (lastDistance <= RADIUS_METERS) {
+    compassEl.classList.add("near");
+  } else {
+    compassEl.classList.remove("near");
+  }
+}
+
 /* ================= GPS ================= */
 function startGPS() {
   if (typeof testMode !== "undefined" && testMode) return;
@@ -140,6 +229,7 @@ function onLocation(pos) {
     level.lng
   );
   lastDistance = d;
+  updateCompassArrow();
 
   if (d <= RADIUS_METERS || testMode) {
     if (testMode) {
@@ -302,6 +392,7 @@ function submitAnswer(force = false) {
 
   if (currentLevel >= levels.length) {
     statusEl.innerText = "🎉 Klaar!";
+    if (compassEl) compassEl.classList.add("hidden");
     navigator.geolocation.clearWatch(watchId);
     return;
   }
@@ -313,6 +404,12 @@ function submitAnswer(force = false) {
 async function init() {
   registerServiceWorker();
   updateNotificationUI();
+  updateCompassUI();
+  if (typeof DeviceOrientationEvent !== "undefined" &&
+      typeof DeviceOrientationEvent.requestPermission !== "function") {
+    compassEnabled = true;
+    startCompass();
+  }
   await loadLevels();
   initAdmin();
   startGPS();

@@ -31,6 +31,34 @@ input {
   display: none;
 }
 
+.compass {
+  margin: 12px 0;
+  padding: 12px;
+  border-radius: 12px;
+  background: #fff;
+  border: 1px solid #ddd;
+  text-align: center;
+}
+
+#compassArrow {
+  width: 0;
+  height: 0;
+  margin: 4px auto 6px;
+  border-left: 16px solid transparent;
+  border-right: 16px solid transparent;
+  border-bottom: 32px solid #222;
+  transform-origin: 50% 80%;
+}
+
+.compass.near #compassArrow {
+  border-bottom-color: #1f7a1f;
+}
+
+#compassLabel {
+  font-size: 14px;
+  color: #444;
+}
+
 .admin-actions {
   display: grid;
   gap: 8px;

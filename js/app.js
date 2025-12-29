@@ -205,7 +205,7 @@ function updateCompassArrow() {
     level.lng
   );
 
-  const OFFSET_DEGREES = -25;
+  const OFFSET_DEGREES = -15;
   let rotation = bearing - compassHeading + OFFSET_DEGREES;
   if (rotation < 0) rotation += 360;
   compassArrowEl.style.transform = `rotate(${rotation}deg)`;

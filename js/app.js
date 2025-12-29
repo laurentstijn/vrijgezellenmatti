@@ -19,6 +19,7 @@ const photoInput = document.getElementById("photoInput");
 const submitBtn = document.getElementById("submitBtn");
 const compassEl = document.getElementById("compass");
 const compassArrowEl = document.getElementById("compassArrow");
+const compassDebugEl = document.getElementById("compassDebug");
 const enableCompassBtn = document.getElementById("enableCompass");
 const enableNotificationsBtn = document.getElementById("enableNotifications");
 
@@ -147,14 +148,17 @@ function updateCompassUI() {
   if (!("DeviceOrientationEvent" in window)) {
     compassEl.classList.add("hidden");
     if (enableCompassBtn) enableCompassBtn.classList.add("hidden");
+    if (compassDebugEl) compassDebugEl.classList.add("hidden");
     return;
   }
   if (typeof DeviceOrientationEvent.requestPermission === "function" && !compassEnabled) {
     if (enableCompassBtn) enableCompassBtn.classList.remove("hidden");
     compassEl.classList.add("hidden");
+    if (compassDebugEl) compassDebugEl.classList.add("hidden");
     return;
   }
   compassEl.classList.remove("hidden");
+  if (compassDebugEl) compassDebugEl.classList.remove("hidden");
 }
 
 function startCompass() {
@@ -168,6 +172,10 @@ function onDeviceOrientation(event) {
     compassHeading = event.webkitCompassHeading;
   } else if (event.alpha != null) {
     compassHeading = 360 - event.alpha;
+  }
+  if (compassDebugEl) {
+    const headingText = compassHeading != null ? compassHeading.toFixed(1) : "n/a";
+    compassDebugEl.innerText = `Heading: ${headingText}°`;
   }
   updateCompassArrow();
 }
@@ -205,6 +213,9 @@ function updateCompassArrow() {
     compassEl.classList.add("near");
   } else {
     compassEl.classList.remove("near");
+  }
+  if (compassDebugEl) {
+    compassDebugEl.innerText = `Heading: ${compassHeading.toFixed(1)}° • Bearing: ${bearing.toFixed(1)}°`;
   }
 }
 

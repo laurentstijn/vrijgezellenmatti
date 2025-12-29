@@ -49,6 +49,7 @@ if (enableCompassBtn) {
       }
       compassEnabled = true;
       enableCompassBtn.classList.add("hidden");
+      if (compassEl) compassEl.classList.remove("hidden");
       startCompass();
     } catch (_) {
       // Ignore permission errors

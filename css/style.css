@@ -41,17 +41,15 @@ input {
 }
 
 #compassArrow {
-  width: 0;
-  height: 0;
+  width: 120px;
+  height: 120px;
   margin: 4px auto 6px;
-  border-left: 16px solid transparent;
-  border-right: 16px solid transparent;
-  border-bottom: 32px solid #222;
-  transform-origin: 50% 80%;
+  background: url("../img/arrow.png") center/contain no-repeat;
+  transform-origin: 50% 50%;
 }
 
 .compass.near #compassArrow {
-  border-bottom-color: #1f7a1f;
+  filter: hue-rotate(90deg) saturate(1.2);
 }
 
 #compassLabel {

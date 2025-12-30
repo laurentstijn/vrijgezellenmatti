@@ -1,4 +1,4 @@
-const RADIUS_METERS = 15;
+const RADIUS_METERS = 5;
 
 function distanceInMeters(lat1, lon1, lat2, lon2) {
   const R = 6371000;

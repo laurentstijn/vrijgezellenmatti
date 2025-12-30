@@ -273,12 +273,14 @@ function renderLevelList() {
       : questionType === "video"
         ? "video/*"
         : "";
+    const notifyBadge = level.notifyOnArrive ? `<span class="admin-badge">🔔</span>` : "";
     return `
       <div class="admin-list-item ${activeClass} ${openClass}" data-index="${index}">
         <div class="admin-list-header">
           <span class="admin-drag-handle" aria-label="Sleep om te verplaatsen">≡</span>
           <button class="admin-accordion-toggle" type="button">#${index + 1}</button>
           <span class="admin-list-title">${escapeHtml(shortTitle)}</span>
+          ${notifyBadge}
         </div>
         <div class="admin-accordion-body ${bodyClass}">
           <label>Vraag</label>

@@ -138,7 +138,14 @@
           <button id="resetAllBtn" class="danger" type="button">Alles wissen</button>
         </div>
       </div>
-      <div id="questionList" class="grid"></div>
+      <div id="questionList" class="grid" style="margin-bottom:14px"></div>
+      
+      <div class="note">
+        <label>🛠 <strong>Systeembeheer: OneSignal REST API Key</strong><br>
+          <span class="small muted">Plak je key hier in (hij blijft veilig bewaard op dit apparaat). Noodzakelijk om push-berichten af te vuren.</span>
+          <input type="password" id="hostApiKeyInput" placeholder="os_v2_app_..." style="margin-top:6px" />
+        </label>
+      </div>
     </div>
   </div>
 
@@ -194,7 +201,7 @@ const firebaseConfig = {
 
 // VUL DIT NOG IN vanuit je OneSignal Dashboard
 const ONESIGNAL_APP_ID = "efd7fcdf-1b24-4986-80b9-ea22cad5e55b";
-const ONESIGNAL_REST_API_KEY = "os_v2_app_57l7zxy3ereynafz5mrm5vpflpdq63w6czge4t5ab7u54yc5bpkfiso64mlnj5bfl5phtm2wybakbqowmt2mpyggloxvxi5pakrgijq";
+// De REST API KEY vragen we nu lokaal, want GitHub verwijdert ze automatisch wegens privacy scannen.
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
@@ -265,6 +272,7 @@ const el = {
   clearVrijgezelAnswerBtn: document.getElementById('clearVrijgezelAnswerBtn'),
   changeRoleBtn: document.getElementById('changeRoleBtn'),
   sendAlertBtn: document.getElementById('sendAlertBtn'),
+  hostApiKeyInput: document.getElementById('hostApiKeyInput'),
 };
 
 function loadPrefs(){
@@ -296,6 +304,11 @@ function setRole(r){
 document.querySelectorAll('.roleBtn').forEach(btn=>{
   btn.onclick = ()=> setRole(btn.dataset.role);
 });
+
+el.hostApiKeyInput.oninput = () => {
+  prefs.restApiKey = el.hostApiKeyInput.value.trim();
+  savePrefs();
+};
 
 async function saveState(){
   if(!state.sessionCode) return;
@@ -625,8 +638,9 @@ el.copyDeepLinkBtn.onclick = async () => {
 
 // Functie voor de Host: stuur een push-notificatie via de OneSignal REST API (geen server nodig)
 async function sendOneSignalPush(title, body) {
-  if (ONESIGNAL_REST_API_KEY.includes('VUL_HIER')) {
-    alert('Push notificatie kon niet verstuurd worden: Vul de OneSignal REST API Key in de code.');
+  const localRestApiKey = prefs.restApiKey;
+  if (!localRestApiKey || !localRestApiKey.startsWith('os_v2_app')) {
+    alert('Push notificatie kon niet verstuurd worden: Vul aub onderaan de vragenlijst eerst de OneSignal REST API Key in.');
     return;
   }
   if (!state.sessionCode) return;
@@ -644,7 +658,7 @@ async function sendOneSignalPush(title, body) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json; charset=utf-8',
-        'Authorization': `Basic ${ONESIGNAL_REST_API_KEY}`
+        'Authorization': `Basic ${localRestApiKey}`
       },
       body: JSON.stringify(payload)
     });
@@ -701,6 +715,7 @@ setInterval(()=>{
 applyUrlParams();
 if (prefs.role) role = prefs.role;
 if (prefs.sessionCode) el.sessionCodeStart.value = prefs.sessionCode;
+if (prefs.restApiKey) el.hostApiKeyInput.value = prefs.restApiKey;
 
 setRole(role);
 render();

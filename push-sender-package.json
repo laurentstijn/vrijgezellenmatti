@@ -1,0 +1,12 @@
+{
+  "name": "vrijgezellen-push-sender",
+  "version": "1.0.0",
+  "description": "Lokale push-sender voor Vrijgezollen Weekend",
+  "main": "push-sender.js",
+  "scripts": {
+    "start": "node push-sender.js"
+  },
+  "dependencies": {
+    "firebase-admin": "^12.1.0"
+  }
+}

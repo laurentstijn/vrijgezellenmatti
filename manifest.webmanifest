@@ -1,0 +1,22 @@
+{
+  "name": "Vrijgezellen Weekend",
+  "short_name": "Vrijgezellen",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#10131d",
+  "theme_color": "#ff4fa3",
+  "description": "Vrijgezellen app met PWA en push voorbereiding",
+  "icons": [
+    {
+      "src": "./icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "./icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

@@ -1,54 +1,58 @@
 <!DOCTYPE html>
 <html lang="nl">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Vrijgezellen Live Simpel</title>
-<style>
-  :root{
-    --bg:#10131d; --card:#1a1f2e; --card2:#22283a; --text:#f5f7ff; --muted:#b9c0d9;
-    --accent:#ff4fa3; --accent2:#7d8cff; --ok:#36c470; --warn:#ffb54a; --danger:#ff6b6b;
-  }
-  *{box-sizing:border-box}
-  body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:linear-gradient(180deg,#0f1220,#090b12);color:var(--text)}
-  .wrap{max-width:980px;margin:0 auto;padding:16px}
-  .card{background:var(--card);border:1px solid rgba(255,255,255,.08);border-radius:18px;padding:16px;margin-bottom:14px}
-  h1,h2,h3,p{margin:0 0 10px}
-  .muted,.status{color:var(--muted)}
-  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-  .grid{display:grid;gap:12px}
-  .two{grid-template-columns:1fr 1fr}
-  input,textarea,select,button{font:inherit;border-radius:12px;border:1px solid rgba(255,255,255,.12)}
-  input,textarea,select{width:100%;padding:12px;background:#0d1019;color:var(--text)}
-  textarea{min-height:80px;resize:vertical}
-  button{padding:12px 16px;color:white;background:linear-gradient(135deg,var(--accent),var(--accent2));cursor:pointer;font-weight:700}
-  button.secondary{background:#2b3145}
-  button.good{background:linear-gradient(135deg,#28bd67,#1e9e55)}
-  button.warn{background:linear-gradient(135deg,#ffbe55,#ff8d4d)}
-  button.danger{background:linear-gradient(135deg,#ff6b6b,#d9446f)}
-  .pill{display:inline-block;padding:8px 12px;border-radius:999px;background:#2a3146;color:#fff;font-size:.9rem}
-  .hidden{display:none!important}
-  .q{padding:12px;border:1px solid rgba(255,255,255,.08);border-radius:14px;background:var(--card2)}
-  .q.active{outline:2px solid rgba(255,79,163,.8)}
-  .q.done{opacity:.65}
-  .stage{min-height:45vh;display:grid;place-items:center;text-align:center;background:linear-gradient(135deg,rgba(255,79,163,.12),rgba(125,140,255,.12));border-radius:18px;padding:20px}
-  .big{font-size:clamp(1.7rem,5vw,3rem);font-weight:800;line-height:1.1}
-  .answerBox{font-size:1.15rem;background:#111523;border-radius:14px;padding:14px;margin-top:10px}
-  .topbar{display:flex;justify-content:space-between;align-items:center;gap:12px}
-  #rolePicker{position:fixed;inset:0;background:rgba(6,8,12,.88);display:grid;place-items:center;padding:18px;z-index:999}
-  #rolePicker .box{width:min(620px,100%);background:#151a28;border:1px solid rgba(255,255,255,.1);border-radius:22px;padding:20px}
-  .roleBtns{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
-  .roleBtn.active{outline:2px solid rgba(255,79,163,.9)}
-  video{max-width:100%;max-height:42vh;border-radius:14px;background:black;margin-top:12px}
-  .small{font-size:.9rem}
-  @media (max-width:800px){.two,.roleBtns{grid-template-columns:1fr}}
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vrijgezellen PWA Push</title>
+  <meta name="theme-color" content="#ff4fa3" />
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <style>
+    :root{
+      --bg:#10131d; --card:#1a1f2e; --card2:#22283a; --text:#f5f7ff; --muted:#b9c0d9;
+      --accent:#ff4fa3; --accent2:#7d8cff; --ok:#36c470; --warn:#ffb54a; --danger:#ff6b6b;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:linear-gradient(180deg,#0f1220,#090b12);color:var(--text)}
+    .wrap{max-width:980px;margin:0 auto;padding:16px}
+    .card{background:var(--card);border:1px solid rgba(255,255,255,.08);border-radius:18px;padding:16px;margin-bottom:14px}
+    h1,h2,h3,p{margin:0 0 10px}
+    .muted,.status{color:var(--muted)}
+    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    .grid{display:grid;gap:12px}
+    .two{grid-template-columns:1fr 1fr}
+    input,textarea,select,button{font:inherit;border-radius:12px;border:1px solid rgba(255,255,255,.12)}
+    input,textarea,select{width:100%;padding:12px;background:#0d1019;color:var(--text)}
+    textarea{min-height:80px;resize:vertical}
+    button{padding:12px 16px;color:white;background:linear-gradient(135deg,var(--accent),var(--accent2));cursor:pointer;font-weight:700}
+    button.secondary{background:#2b3145}
+    button.good{background:linear-gradient(135deg,#28bd67,#1e9e55)}
+    button.warn{background:linear-gradient(135deg,#ffbe55,#ff8d4d)}
+    button.danger{background:linear-gradient(135deg,#ff6b6b,#d9446f)}
+    .pill{display:inline-block;padding:8px 12px;border-radius:999px;background:#2a3146;color:#fff;font-size:.9rem}
+    .hidden{display:none!important}
+    .q{padding:12px;border:1px solid rgba(255,255,255,.08);border-radius:14px;background:var(--card2)}
+    .q.active{outline:2px solid rgba(255,79,163,.8)}
+    .q.done{opacity:.65}
+    .stage{min-height:45vh;display:grid;place-items:center;text-align:center;background:linear-gradient(135deg,rgba(255,79,163,.12),rgba(125,140,255,.12));border-radius:18px;padding:20px}
+    .big{font-size:clamp(1.7rem,5vw,3rem);font-weight:800;line-height:1.1}
+    .answerBox{font-size:1.15rem;background:#111523;border-radius:14px;padding:14px;margin-top:10px}
+    .topbar{display:flex;justify-content:space-between;align-items:center;gap:12px}
+    #rolePicker{position:fixed;inset:0;background:rgba(6,8,12,.88);display:grid;place-items:center;padding:18px;z-index:999}
+    #rolePicker .box{width:min(620px,100%);background:#151a28;border:1px solid rgba(255,255,255,.1);border-radius:22px;padding:20px}
+    .roleBtns{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+    .roleBtn.active{outline:2px solid rgba(255,79,163,.9)}
+    video{max-width:100%;max-height:42vh;border-radius:14px;background:black;margin-top:12px}
+    .small{font-size:.9rem}
+    .note{padding:12px;border-radius:14px;background:rgba(255,255,255,.05);border-left:4px solid var(--warn)}
+    code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+    @media (max-width:800px){.two,.roleBtns{grid-template-columns:1fr}}
+  </style>
 </head>
 <body>
 <div id="rolePicker">
   <div class="box">
-    <h2>Simpele live versie</h2>
-    <p class="muted">Deze versie synchroniseert wél tussen meerdere toestellen via Firebase.</p>
+    <h2>PWA push versie</h2>
+    <p class="muted">Installeer deze app op het beginscherm voor de beste kans op meldingen op iPhone.</p>
     <div class="roleBtns" style="margin:14px 0;">
       <button class="roleBtn active" data-role="host" type="button">Host</button>
       <button class="roleBtn secondary" data-role="vrijgezel" type="button">Vrijgezel</button>
@@ -57,7 +61,7 @@
     <label>Sessiecode
       <input id="sessionCodeStart" placeholder="BV. MATTI" />
     </label>
-    <div class="row small muted" style="margin-top:8px">Gebruik op alle toestellen exact dezelfde sessiecode. Deze versie onthoudt voortaan rol en sessie op hetzelfde toestel.</div>
+    <div class="row small muted" style="margin-top:8px">Deze app onthoudt rol en sessie op hetzelfde toestel.</div>
     <div class="row" style="margin-top:14px;justify-content:flex-end">
       <button id="startBtn" type="button">Start</button>
     </div>
@@ -68,15 +72,29 @@
   <div class="card">
     <div class="topbar">
       <div>
-        <h1>Vrijgezellen Weekend</h1>
+        <h1>Vrijgezellen Weekend PWA</h1>
         <div class="status" id="headerStatus">Nog niet gestart</div>
       </div>
       <div class="row">
         <span class="pill" id="rolePill">Rol</span>
         <span class="pill" id="syncPill">Sync: ...</span>
+        <span class="pill" id="pushPill">Push: ...</span>
         <button id="changeRoleBtn" class="secondary" type="button">Wijzig rol</button>
       </div>
     </div>
+  </div>
+
+  <div class="card">
+    <h2>Installatie & push</h2>
+    <div class="note">
+      <strong>Belangrijk:</strong> echte iPhone push werkt pas als je de app <strong>vanaf het beginscherm</strong> opent, meldingen toestaat, én in Firebase Cloud Messaging nog een <strong>VAPID key</strong> invult.
+    </div>
+    <div class="row" style="margin-top:12px">
+      <button id="installBtn" class="secondary" type="button">Installeer app</button>
+      <button id="enablePushBtn" class="warn" type="button">Meldingen aanzetten</button>
+      <button id="copyDeepLinkBtn" class="secondary" type="button">Kopieer deeplink</button>
+    </div>
+    <div class="status" id="pushHelp">Nog niet geactiveerd.</div>
   </div>
 
   <div id="hostPanel" class="hidden">
@@ -111,7 +129,7 @@
       <div class="topbar">
         <div>
           <h2>Vragenlijst</h2>
-          <div class="status">Aanpassen, activeren, reveal of wissen. Op iPhone werkt de melding in deze webapp alleen betrouwbaar zolang de pagina open is.</div>
+          <div class="status">Aanpassen, activeren, reveal of wissen.</div>
         </div>
         <div class="row">
           <button id="sendAlertBtn" class="warn" type="button">Stuur melding</button>
@@ -161,7 +179,8 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, doc, getDoc, setDoc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getMessaging, getToken, isSupported } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCBKlUwxs5X4Z0i3_Po25pb3jUDIxFuL84",
@@ -172,16 +191,20 @@ const firebaseConfig = {
   appId: "1:89324838670:web:622fb70c1a921c29e9015f"
 };
 
+// VUL DIT NOG IN vanuit Firebase Cloud Messaging > Web push certificates
+const VAPID_KEY = "PASTE_YOUR_VAPID_KEY_HERE";
+
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-const PREFS_KEY = 'vrijgezellen_live_prefs_v1';
+const PREFS_KEY = 'vrijgezellen_pwa_push_prefs_v1';
 let prefs = loadPrefs();
-
 let state = {sessionCode:'', questions:[], activeId:null, reveal:false, lastAlertAt:0};
 let role = prefs.role || 'host';
 let unsubscribe = null;
 let lastSeenAlert = 0;
+let deferredPrompt = null;
+let swReg = null;
 
 const el = {
   rolePicker: document.getElementById('rolePicker'),
@@ -189,6 +212,11 @@ const el = {
   startBtn: document.getElementById('startBtn'),
   rolePill: document.getElementById('rolePill'),
   syncPill: document.getElementById('syncPill'),
+  pushPill: document.getElementById('pushPill'),
+  pushHelp: document.getElementById('pushHelp'),
+  installBtn: document.getElementById('installBtn'),
+  enablePushBtn: document.getElementById('enablePushBtn'),
+  copyDeepLinkBtn: document.getElementById('copyDeepLinkBtn'),
   headerStatus: document.getElementById('headerStatus'),
   hostPanel: document.getElementById('hostPanel'),
   vrijgezelPanel: document.getElementById('vrijgezelPanel'),
@@ -218,17 +246,15 @@ const el = {
 };
 
 function loadPrefs(){
-  try{
-    return JSON.parse(localStorage.getItem(PREFS_KEY)) || {};
-  }catch{
-    return {};
-  }
+  try { return JSON.parse(localStorage.getItem(PREFS_KEY)) || {}; }
+  catch { return {}; }
 }
 function savePrefs(){
   localStorage.setItem(PREFS_KEY, JSON.stringify(prefs));
 }
 function uid(){ return Math.random().toString(36).slice(2,10); }
 function activeQuestion(){ return state.questions.find(q => q.id === state.activeId) || null; }
+function sessionRef(code){ return doc(db, 'sessions', code); }
 
 function setRole(r){
   role = r;
@@ -248,24 +274,6 @@ function setRole(r){
 document.querySelectorAll('.roleBtn').forEach(btn=>{
   btn.onclick = ()=> setRole(btn.dataset.role);
 });
-
-function sessionRef(code){
-  return doc(db, 'sessions', code);
-}
-
-function applyUrlParams(){
-  const params = new URLSearchParams(location.search);
-  const roleParam = (params.get('role') || '').trim().toLowerCase();
-  const codeParam = (params.get('code') || '').trim().toUpperCase();
-  if (['host','vrijgezel','kijker'].includes(roleParam)) {
-    prefs.role = roleParam;
-    role = roleParam;
-  }
-  if (codeParam) {
-    prefs.sessionCode = codeParam;
-  }
-  savePrefs();
-}
 
 async function saveState(){
   if(!state.sessionCode) return;
@@ -305,7 +313,9 @@ async function joinSession(code){
     if (state.lastAlertAt && state.lastAlertAt !== lastSeenAlert) {
       lastSeenAlert = state.lastAlertAt;
       beep();
-      if(role !== 'host') alert('Nieuwe vraag klaar.');
+      if(role !== 'host') {
+        alert('Nieuwe vraag klaar.');
+      }
     }
     if (previousActiveId !== state.activeId && role !== 'host' && state.activeId) {
       beep();
@@ -313,7 +323,6 @@ async function joinSession(code){
   }, (err) => {
     console.error(err);
     el.syncPill.textContent = 'Sync: fout';
-    alert('Firebase sync fout.');
   });
 }
 
@@ -327,7 +336,6 @@ el.changeRoleBtn.onclick = ()=> el.rolePicker.classList.remove('hidden');
 
 function render(){
   el.headerStatus.textContent = state.sessionCode ? 'Sessie: ' + state.sessionCode : 'Nog niet gestart';
-
   const q = activeQuestion();
   if(!q){
     el.stageQuestion.textContent = 'Nog geen actieve vraag';
@@ -513,24 +521,88 @@ function updateCountdown(){
   el.countdownPill.textContent = h>0 ? `${h}u ${String(m).padStart(2,'0')}m` : `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
 }
 
-function checkScheduledAlerts(){
-  if(role !== 'host') return;
-  const now = Date.now();
-  let changed = false;
-  state.questions.forEach(q=>{
-    if(q.time && !q.done && !q.notified){
-      const t = new Date(q.time).getTime();
-      if(!isNaN(t) && now >= t){
-        q.notified = true;
-        state.activeId = q.id;
-        state.reveal = false;
-        state.lastAlertAt = Date.now();
-        changed = true;
-      }
+async function registerPWAStuff() {
+  if ('serviceWorker' in navigator) {
+    try {
+      swReg = await navigator.serviceWorker.register('./sw.js');
+    } catch (err) {
+      console.error('SW registratie mislukt', err);
     }
+  }
+
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    el.pushHelp.textContent = 'Installatie beschikbaar. Gebruik "Installeer app".';
   });
-  if(changed) saveState();
+
+  el.installBtn.onclick = async () => {
+    if (!deferredPrompt) {
+      el.pushHelp.textContent = 'Geen install prompt beschikbaar. Op iPhone voeg je toe via Deel > Zet op beginscherm.';
+      return;
+    }
+    deferredPrompt.prompt();
+    await deferredPrompt.userChoice;
+    deferredPrompt = null;
+  };
 }
+
+async function enablePush() {
+  if (!('Notification' in window)) {
+    el.pushPill.textContent = 'Push: niet ondersteund';
+    el.pushHelp.textContent = 'Deze browser ondersteunt geen notifications.';
+    return;
+  }
+
+  const supported = await isSupported().catch(() => false);
+  if (!supported) {
+    el.pushPill.textContent = 'Push: beperkt';
+    el.pushHelp.textContent = 'Messaging wordt in deze browser niet volledig ondersteund.';
+    return;
+  }
+
+  if (VAPID_KEY.includes('PASTE_YOUR_VAPID_KEY_HERE')) {
+    el.pushPill.textContent = 'Push: setup nodig';
+    el.pushHelp.textContent = 'Vul eerst je Firebase VAPID key in index.html.';
+    return;
+  }
+
+  try {
+    const permission = await Notification.requestPermission();
+    if (permission !== 'granted') {
+      el.pushPill.textContent = 'Push: geweigerd';
+      el.pushHelp.textContent = 'Meldingen zijn niet toegestaan.';
+      return;
+    }
+
+    const messaging = getMessaging(app);
+    const token = await getToken(messaging, {
+      vapidKey: VAPID_KEY,
+      serviceWorkerRegistration: swReg
+    });
+
+    prefs.pushToken = token;
+    savePrefs();
+
+    el.pushPill.textContent = 'Push: klaar';
+    el.pushHelp.textContent = 'Push token aangemaakt. Volgende stap: een serverfunctie of handmatige FCM send gebruiken om dit token te targeten.';
+  } catch (err) {
+    console.error(err);
+    el.pushPill.textContent = 'Push: fout';
+    el.pushHelp.textContent = 'Push setup mislukt. Kijk in console of VAPID key klopt.';
+  }
+}
+
+el.enablePushBtn.onclick = enablePush;
+
+el.copyDeepLinkBtn.onclick = async () => {
+  const code = state.sessionCode || prefs.sessionCode || '';
+  const url = new URL(location.href);
+  if (code) url.searchParams.set('code', code);
+  url.searchParams.set('role', role);
+  await navigator.clipboard.writeText(url.toString());
+  el.pushHelp.textContent = 'Deeplink gekopieerd.';
+};
 
 function beep(){
   try{
@@ -553,22 +625,31 @@ function escapeHtml(str=''){
   return str.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#39;');
 }
 
+function applyUrlParams() {
+  const params = new URLSearchParams(location.search);
+  const roleParam = (params.get('role') || '').toLowerCase();
+  const codeParam = (params.get('code') || '').toUpperCase();
+  if (['host','vrijgezel','kijker'].includes(roleParam)) {
+    prefs.role = roleParam;
+    role = roleParam;
+  }
+  if (codeParam) {
+    prefs.sessionCode = codeParam;
+  }
+  savePrefs();
+}
+
 setInterval(()=>{
   render();
-  checkScheduledAlerts();
 }, 1000);
 
 applyUrlParams();
-
-if (prefs.role) {
-  role = prefs.role;
-}
-if (prefs.sessionCode) {
-  el.sessionCodeStart.value = prefs.sessionCode;
-}
+if (prefs.role) role = prefs.role;
+if (prefs.sessionCode) el.sessionCodeStart.value = prefs.sessionCode;
 
 setRole(role);
 render();
+registerPWAStuff();
 
 if (prefs.sessionCode) {
   joinSession(prefs.sessionCode).then(() => {

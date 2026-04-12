@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Vrijgezellen Live Simpel</title>
+<style>
+  :root{
+    --bg:#10131d; --card:#1a1f2e; --card2:#22283a; --text:#f5f7ff; --muted:#b9c0d9;
+    --accent:#ff4fa3; --accent2:#7d8cff; --ok:#36c470; --warn:#ffb54a; --danger:#ff6b6b;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:linear-gradient(180deg,#0f1220,#090b12);color:var(--text)}
+  .wrap{max-width:980px;margin:0 auto;padding:16px}
+  .card{background:var(--card);border:1px solid rgba(255,255,255,.08);border-radius:18px;padding:16px;margin-bottom:14px}
+  h1,h2,h3,p{margin:0 0 10px}
+  .muted,.status{color:var(--muted)}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .grid{display:grid;gap:12px}
+  .two{grid-template-columns:1fr 1fr}
+  input,textarea,select,button{font:inherit;border-radius:12px;border:1px solid rgba(255,255,255,.12)}
+  input,textarea,select{width:100%;padding:12px;background:#0d1019;color:var(--text)}
+  textarea{min-height:80px;resize:vertical}
+  button{padding:12px 16px;color:white;background:linear-gradient(135deg,var(--accent),var(--accent2));cursor:pointer;font-weight:700}
+  button.secondary{background:#2b3145}
+  button.good{background:linear-gradient(135deg,#28bd67,#1e9e55)}
+  button.warn{background:linear-gradient(135deg,#ffbe55,#ff8d4d)}
+  button.danger{background:linear-gradient(135deg,#ff6b6b,#d9446f)}
+  .pill{display:inline-block;padding:8px 12px;border-radius:999px;background:#2a3146;color:#fff;font-size:.9rem}
+  .hidden{display:none!important}
+  .q{padding:12px;border:1px solid rgba(255,255,255,.08);border-radius:14px;background:var(--card2)}
+  .q.active{outline:2px solid rgba(255,79,163,.8)}
+  .q.done{opacity:.65}
+  .stage{min-height:45vh;display:grid;place-items:center;text-align:center;background:linear-gradient(135deg,rgba(255,79,163,.12),rgba(125,140,255,.12));border-radius:18px;padding:20px}
+  .big{font-size:clamp(1.7rem,5vw,3rem);font-weight:800;line-height:1.1}
+  .answerBox{font-size:1.15rem;background:#111523;border-radius:14px;padding:14px;margin-top:10px}
+  .topbar{display:flex;justify-content:space-between;align-items:center;gap:12px}
+  #rolePicker{position:fixed;inset:0;background:rgba(6,8,12,.88);display:grid;place-items:center;padding:18px;z-index:999}
+  #rolePicker .box{width:min(620px,100%);background:#151a28;border:1px solid rgba(255,255,255,.1);border-radius:22px;padding:20px}
+  .roleBtns{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  .roleBtn.active{outline:2px solid rgba(255,79,163,.9)}
+  video{max-width:100%;max-height:42vh;border-radius:14px;background:black;margin-top:12px}
+  .small{font-size:.9rem}
+  @media (max-width:800px){.two,.roleBtns{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div id="rolePicker">
+  <div class="box">
+    <h2>Simpele live versie</h2>
+    <p class="muted">Deze versie synchroniseert wél tussen meerdere toestellen via Firebase.</p>
+    <div class="roleBtns" style="margin:14px 0;">
+      <button class="roleBtn active" data-role="host" type="button">Host</button>
+      <button class="roleBtn secondary" data-role="vrijgezel" type="button">Vrijgezel</button>
+      <button class="roleBtn secondary" data-role="kijker" type="button">Kijker</button>
+    </div>
+    <label>Sessiecode
+      <input id="sessionCodeStart" placeholder="BV. MATTI" />
+    </label>
+    <div class="row small muted" style="margin-top:8px">Gebruik op alle toestellen exact dezelfde sessiecode.</div>
+    <div class="row" style="margin-top:14px;justify-content:flex-end">
+      <button id="startBtn" type="button">Start</button>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="card">
+    <div class="topbar">
+      <div>
+        <h1>Vrijgezellen Weekend</h1>
+        <div class="status" id="headerStatus">Nog niet gestart</div>
+      </div>
+      <div class="row">
+        <span class="pill" id="rolePill">Rol</span>
+        <span class="pill" id="syncPill">Sync: ...</span>
+        <button id="changeRoleBtn" class="secondary" type="button">Wijzig rol</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="hostPanel" class="hidden">
+    <div class="card">
+      <h2>Vraag maken of aanpassen</h2>
+      <div class="grid two">
+        <div class="grid">
+          <label>Vraag
+            <textarea id="qText" placeholder="Bijv. Wat is mijn favoriete snack?"></textarea>
+          </label>
+          <label>Correct antwoord
+            <input id="qCorrect" placeholder="Bijv. Durum kebab" />
+          </label>
+        </div>
+        <div class="grid">
+          <label>Videolink (optioneel)
+            <input id="qVideo" placeholder="https://.../vraag1.mp4" />
+          </label>
+          <label>Tijdstip melding (optioneel)
+            <input id="qTime" type="datetime-local" />
+          </label>
+          <input type="hidden" id="qEditId" />
+        </div>
+      </div>
+      <div class="row">
+        <button id="saveQuestionBtn" type="button">Opslaan</button>
+        <button id="clearFormBtn" class="secondary" type="button">Leeg maken</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="topbar">
+        <div>
+          <h2>Vragenlijst</h2>
+          <div class="status">Aanpassen, activeren, reveal of wissen.</div>
+        </div>
+        <div class="row">
+          <button id="sendAlertBtn" class="warn" type="button">Stuur melding</button>
+          <button id="resetAllBtn" class="danger" type="button">Alles wissen</button>
+        </div>
+      </div>
+      <div id="questionList" class="grid"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="topbar">
+      <div>
+        <h2>Live scherm</h2>
+        <div class="status" id="liveSub">Wacht op een actieve vraag</div>
+      </div>
+      <div class="row">
+        <span class="pill" id="countdownPill">Geen planning</span>
+      </div>
+    </div>
+    <div class="stage">
+      <div style="width:100%">
+        <div class="big" id="stageQuestion">Nog geen actieve vraag</div>
+        <div id="stageCorrect" class="answerBox hidden"></div>
+        <div id="stageVrijgezelAnswer" class="answerBox hidden"></div>
+        <video id="stageVideo" controls class="hidden"></video>
+      </div>
+    </div>
+    <div class="row" style="margin-top:12px">
+      <button id="revealBtn" class="good hidden" type="button">Reveal</button>
+      <button id="hideRevealBtn" class="secondary hidden" type="button">Verberg reveal</button>
+    </div>
+  </div>
+
+  <div id="vrijgezelPanel" class="card hidden">
+    <h2>Antwoord van de vrijgezel</h2>
+    <div class="status" id="vrijgezelPrompt">Wacht op een actieve vraag.</div>
+    <label>Jouw antwoord
+      <textarea id="vrijgezelAnswer" placeholder="Typ hier het antwoord..."></textarea>
+    </label>
+    <div class="row">
+      <button id="saveVrijgezelAnswerBtn" type="button">Antwoord opslaan</button>
+      <button id="clearVrijgezelAnswerBtn" class="secondary" type="button">Leeg maken</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, doc, getDoc, setDoc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCBKlUwxs5X4Z0i3_Po25pb3jUDIxFuL84",
+  authDomain: "vrijgezellen-8143f.firebaseapp.com",
+  projectId: "vrijgezellen-8143f",
+  storageBucket: "vrijgezellen-8143f.firebasestorage.app",
+  messagingSenderId: "89324838670",
+  appId: "1:89324838670:web:622fb70c1a921c29e9015f"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+let state = {sessionCode:'', questions:[], activeId:null, reveal:false, lastAlertAt:0};
+let role = 'host';
+let unsubscribe = null;
+let lastSeenAlert = 0;
+
+const el = {
+  rolePicker: document.getElementById('rolePicker'),
+  sessionCodeStart: document.getElementById('sessionCodeStart'),
+  startBtn: document.getElementById('startBtn'),
+  rolePill: document.getElementById('rolePill'),
+  syncPill: document.getElementById('syncPill'),
+  headerStatus: document.getElementById('headerStatus'),
+  hostPanel: document.getElementById('hostPanel'),
+  vrijgezelPanel: document.getElementById('vrijgezelPanel'),
+  qText: document.getElementById('qText'),
+  qCorrect: document.getElementById('qCorrect'),
+  qVideo: document.getElementById('qVideo'),
+  qTime: document.getElementById('qTime'),
+  qEditId: document.getElementById('qEditId'),
+  saveQuestionBtn: document.getElementById('saveQuestionBtn'),
+  clearFormBtn: document.getElementById('clearFormBtn'),
+  questionList: document.getElementById('questionList'),
+  resetAllBtn: document.getElementById('resetAllBtn'),
+  stageQuestion: document.getElementById('stageQuestion'),
+  stageCorrect: document.getElementById('stageCorrect'),
+  stageVrijgezelAnswer: document.getElementById('stageVrijgezelAnswer'),
+  stageVideo: document.getElementById('stageVideo'),
+  revealBtn: document.getElementById('revealBtn'),
+  hideRevealBtn: document.getElementById('hideRevealBtn'),
+  liveSub: document.getElementById('liveSub'),
+  countdownPill: document.getElementById('countdownPill'),
+  vrijgezelPrompt: document.getElementById('vrijgezelPrompt'),
+  vrijgezelAnswer: document.getElementById('vrijgezelAnswer'),
+  saveVrijgezelAnswerBtn: document.getElementById('saveVrijgezelAnswerBtn'),
+  clearVrijgezelAnswerBtn: document.getElementById('clearVrijgezelAnswerBtn'),
+  changeRoleBtn: document.getElementById('changeRoleBtn'),
+  sendAlertBtn: document.getElementById('sendAlertBtn'),
+};
+
+function uid(){ return Math.random().toString(36).slice(2,10); }
+function activeQuestion(){ return state.questions.find(q => q.id === state.activeId) || null; }
+
+function setRole(r){
+  role = r;
+  el.rolePill.textContent = 'Rol: ' + r;
+  el.hostPanel.classList.toggle('hidden', r !== 'host');
+  el.vrijgezelPanel.classList.toggle('hidden', r !== 'vrijgezel');
+  el.revealBtn.classList.toggle('hidden', r !== 'host');
+  el.hideRevealBtn.classList.toggle('hidden', r !== 'host');
+  document.querySelectorAll('.roleBtn').forEach(btn=>{
+    btn.classList.toggle('active', btn.dataset.role === r);
+    btn.classList.toggle('secondary', btn.dataset.role !== r);
+  });
+  render();
+}
+document.querySelectorAll('.roleBtn').forEach(btn=>{
+  btn.onclick = ()=> setRole(btn.dataset.role);
+});
+
+function sessionRef(code){
+  return doc(db, 'sessions', code);
+}
+
+async function saveState(){
+  if(!state.sessionCode) return;
+  const payload = JSON.parse(JSON.stringify(state));
+  payload.updatedAt = Date.now();
+  await setDoc(sessionRef(state.sessionCode), payload);
+}
+
+async function joinSession(code){
+  state.sessionCode = code;
+  el.headerStatus.textContent = 'Sessie: ' + code;
+  el.syncPill.textContent = 'Sync: verbinden...';
+
+  const snap = await getDoc(sessionRef(code));
+  if(!snap.exists() && role === 'host'){
+    state = {sessionCode:code, questions:[], activeId:null, reveal:false, lastAlertAt:0};
+    await setDoc(sessionRef(code), {...state, createdAt: Date.now()});
+  }
+
+  if(unsubscribe) unsubscribe();
+  unsubscribe = onSnapshot(sessionRef(code), (snap) => {
+    if(!snap.exists()) return;
+    const incoming = snap.data();
+    const previousActiveId = state.activeId;
+    state = {
+      sessionCode: incoming.sessionCode || code,
+      questions: incoming.questions || [],
+      activeId: incoming.activeId || null,
+      reveal: !!incoming.reveal,
+      lastAlertAt: incoming.lastAlertAt || 0
+    };
+    el.syncPill.textContent = 'Sync: live';
+    render();
+
+    if (state.lastAlertAt && state.lastAlertAt !== lastSeenAlert) {
+      lastSeenAlert = state.lastAlertAt;
+      beep();
+      if(role !== 'host') alert('Nieuwe vraag klaar.');
+    }
+    if (previousActiveId !== state.activeId && role !== 'host' && state.activeId) {
+      beep();
+    }
+  }, (err) => {
+    console.error(err);
+    el.syncPill.textContent = 'Sync: fout';
+    alert('Firebase sync fout.');
+  });
+}
+
+el.startBtn.onclick = async ()=>{
+  const code = el.sessionCodeStart.value.trim().toUpperCase();
+  if(!code){ alert('Vul een sessiecode in.'); return; }
+  await joinSession(code);
+  el.rolePicker.classList.add('hidden');
+};
+el.changeRoleBtn.onclick = ()=> el.rolePicker.classList.remove('hidden');
+
+function render(){
+  el.headerStatus.textContent = state.sessionCode ? 'Sessie: ' + state.sessionCode : 'Nog niet gestart';
+
+  const q = activeQuestion();
+  if(!q){
+    el.stageQuestion.textContent = 'Nog geen actieve vraag';
+    el.liveSub.textContent = 'Host moet eerst een vraag activeren';
+    el.stageCorrect.classList.add('hidden');
+    el.stageVrijgezelAnswer.classList.add('hidden');
+    el.stageVideo.classList.add('hidden');
+    el.stageVideo.pause();
+    el.stageVideo.removeAttribute('src');
+    el.vrijgezelPrompt.textContent = 'Wacht op een actieve vraag.';
+  } else {
+    el.stageQuestion.textContent = q.text || 'Actieve vraag';
+    if(state.reveal){
+      el.liveSub.textContent = 'Reveal';
+      el.stageCorrect.textContent = 'Correct antwoord: ' + (q.correct || '—');
+      el.stageCorrect.classList.remove('hidden');
+
+      if(q.vrijgezelAnswer){
+        el.stageVrijgezelAnswer.textContent = 'Antwoord vrijgezel: ' + q.vrijgezelAnswer;
+        el.stageVrijgezelAnswer.classList.remove('hidden');
+      } else {
+        el.stageVrijgezelAnswer.classList.add('hidden');
+      }
+
+      if(q.video){
+        el.stageVideo.src = q.video;
+        el.stageVideo.classList.remove('hidden');
+      } else {
+        el.stageVideo.classList.add('hidden');
+      }
+    } else {
+      el.liveSub.textContent = 'Vraag staat live';
+      el.stageCorrect.classList.add('hidden');
+      el.stageVrijgezelAnswer.classList.add('hidden');
+      el.stageVideo.classList.add('hidden');
+      el.stageVideo.pause();
+      el.stageVideo.removeAttribute('src');
+    }
+    el.vrijgezelPrompt.textContent = 'Actieve vraag: ' + q.text;
+    if(document.activeElement !== el.vrijgezelAnswer){
+      el.vrijgezelAnswer.value = q.vrijgezelAnswer || '';
+    }
+  }
+
+  el.questionList.innerHTML = '';
+  if(!state.questions.length){
+    el.questionList.innerHTML = '<div class="status">Nog geen vragen.</div>';
+  } else {
+    state.questions.forEach((q, i)=>{
+      const div = document.createElement('div');
+      div.className = 'q' + (q.id === state.activeId ? ' active' : '') + (q.done ? ' done' : '');
+      div.innerHTML = `
+        <div class="row" style="justify-content:space-between">
+          <strong>${i+1}. ${escapeHtml(q.text)}</strong>
+          <span class="pill">${q.id === state.activeId ? 'Actief' : (q.done ? 'Gedaan' : 'Wacht')}</span>
+        </div>
+        <div class="status" style="margin:8px 0">
+          ${q.time ? 'Melding: ' + new Date(q.time).toLocaleString() : 'Geen melding'}
+        </div>
+        <div class="row">
+          <button data-action="edit" data-id="${q.id}" class="secondary" type="button">Aanpassen</button>
+          <button data-action="activate" data-id="${q.id}" type="button">Activeer</button>
+          <button data-action="done" data-id="${q.id}" class="secondary" type="button">Gedaan</button>
+          <button data-action="delete" data-id="${q.id}" class="danger" type="button">Wis</button>
+        </div>
+      `;
+      el.questionList.appendChild(div);
+    });
+    el.questionList.querySelectorAll('button[data-action]').forEach(btn=>{
+      btn.onclick = ()=> handleQuestionAction(btn.dataset.action, btn.dataset.id);
+    });
+  }
+
+  updateCountdown();
+}
+
+async function handleQuestionAction(action, id){
+  const q = state.questions.find(x=>x.id===id);
+  if(!q) return;
+  if(action === 'edit'){
+    el.qEditId.value = q.id;
+    el.qText.value = q.text || '';
+    el.qCorrect.value = q.correct || '';
+    el.qVideo.value = q.video || '';
+    el.qTime.value = q.time || '';
+    window.scrollTo({top:0, behavior:'smooth'});
+    return;
+  }
+  if(action === 'activate'){
+    state.activeId = q.id;
+    state.reveal = false;
+    await saveState();
+    return;
+  }
+  if(action === 'done'){
+    q.done = true;
+    await saveState();
+    return;
+  }
+  if(action === 'delete'){
+    if(!confirm('Deze vraag wissen?')) return;
+    state.questions = state.questions.filter(x=>x.id!==id);
+    if(state.activeId === id){ state.activeId = null; state.reveal = false; }
+    await saveState();
+  }
+}
+
+el.saveQuestionBtn.onclick = async ()=>{
+  const text = el.qText.value.trim();
+  if(!text){ alert('Vul een vraag in.'); return; }
+  const payload = {
+    text,
+    correct: el.qCorrect.value.trim(),
+    video: el.qVideo.value.trim(),
+    time: el.qTime.value || '',
+    vrijgezelAnswer: '',
+    done: false
+  };
+  const editId = el.qEditId.value;
+  if(editId){
+    const q = state.questions.find(x=>x.id===editId);
+    if(q) Object.assign(q, payload, {id: q.id, done: q.done, vrijgezelAnswer: q.vrijgezelAnswer || ''});
+  } else {
+    state.questions.push({id:uid(), ...payload});
+  }
+  clearForm();
+  await saveState();
+};
+function clearForm(){
+  el.qEditId.value = '';
+  el.qText.value = '';
+  el.qCorrect.value = '';
+  el.qVideo.value = '';
+  el.qTime.value = '';
+}
+el.clearFormBtn.onclick = clearForm;
+
+el.revealBtn.onclick = async ()=>{
+  if(!state.activeId){ alert('Activeer eerst een vraag.'); return; }
+  state.reveal = true;
+  await saveState();
+};
+el.hideRevealBtn.onclick = async ()=>{
+  state.reveal = false;
+  await saveState();
+};
+el.saveVrijgezelAnswerBtn.onclick = async ()=>{
+  const q = activeQuestion();
+  if(!q){ alert('Nog geen actieve vraag.'); return; }
+  q.vrijgezelAnswer = el.vrijgezelAnswer.value.trim();
+  await saveState();
+  alert('Antwoord opgeslagen.');
+};
+el.clearVrijgezelAnswerBtn.onclick = ()=> el.vrijgezelAnswer.value = '';
+
+el.resetAllBtn.onclick = async ()=>{
+  if(!confirm('Alles wissen?')) return;
+  state.questions = [];
+  state.activeId = null;
+  state.reveal = false;
+  state.lastAlertAt = 0;
+  await saveState();
+};
+
+el.sendAlertBtn.onclick = async ()=>{
+  state.lastAlertAt = Date.now();
+  await saveState();
+};
+
+function updateCountdown(){
+  const upcoming = state.questions
+    .filter(q => q.time && !q.done)
+    .sort((a,b)=> new Date(a.time) - new Date(b.time))[0];
+  if(!upcoming){ el.countdownPill.textContent = 'Geen planning'; return; }
+  const diff = new Date(upcoming.time).getTime() - Date.now();
+  if(isNaN(diff)){ el.countdownPill.textContent = 'Geen planning'; return; }
+  if(diff <= 0){ el.countdownPill.textContent = 'Nu: ' + upcoming.text; return; }
+  const total = Math.floor(diff/1000);
+  const h = Math.floor(total/3600);
+  const m = Math.floor((total%3600)/60);
+  const s = total%60;
+  el.countdownPill.textContent = h>0 ? `${h}u ${String(m).padStart(2,'0')}m` : `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+}
+
+function checkScheduledAlerts(){
+  if(role !== 'host') return;
+  const now = Date.now();
+  let changed = false;
+  state.questions.forEach(q=>{
+    if(q.time && !q.done && !q.notified){
+      const t = new Date(q.time).getTime();
+      if(!isNaN(t) && now >= t){
+        q.notified = true;
+        state.activeId = q.id;
+        state.reveal = false;
+        state.lastAlertAt = Date.now();
+        changed = true;
+      }
+    }
+  });
+  if(changed) saveState();
+}
+
+function beep(){
+  try{
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.type = 'sine';
+    o.frequency.value = 880;
+    o.connect(g); g.connect(ctx.destination);
+    g.gain.setValueAtTime(0.001, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.15, ctx.currentTime + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
+    o.start();
+    o.stop(ctx.currentTime + 0.38);
+    if(navigator.vibrate) navigator.vibrate([200,120,250]);
+  }catch{}
+}
+
+function escapeHtml(str=''){
+  return str.replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#39;');
+}
+
+setInterval(()=>{
+  render();
+  checkScheduledAlerts();
+}, 1000);
+
+setRole('host');
+render();
+</script>
+</body>
+</html>

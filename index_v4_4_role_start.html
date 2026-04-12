@@ -1,0 +1,1135 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vrijgezellen Weekend V4 Live</title>
+  <style>
+    :root {
+      --bg: #0f1221;
+      --panel: rgba(255,255,255,0.08);
+      --panel-strong: rgba(255,255,255,0.14);
+      --text: #f5f7ff;
+      --muted: #b8bfd9;
+      --accent: #ff4fa3;
+      --accent-2: #7d8cff;
+      --ok: #44d17c;
+      --warn: #ffb648;
+      --danger: #ff6b6b;
+      --radius: 18px;
+      --shadow: 0 16px 40px rgba(0,0,0,0.35);
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(125,140,255,0.22), transparent 28%),
+        radial-gradient(circle at top right, rgba(255,79,163,0.18), transparent 24%),
+        linear-gradient(180deg, #111528 0%, #090b14 100%);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    .app {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 18px;
+    }
+
+    .hero {
+      background: linear-gradient(135deg, rgba(255,79,163,0.22), rgba(125,140,255,0.18));
+      border: 1px solid rgba(255,255,255,0.14);
+      border-radius: 24px;
+      padding: 22px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(14px);
+    }
+
+    h1, h2, h3, p { margin-top: 0; }
+    h1 { font-size: clamp(1.8rem, 4vw, 3.2rem); margin-bottom: 8px; }
+    h2 { font-size: 1.25rem; margin-bottom: 10px; }
+    h3 { font-size: 1rem; margin-bottom: 8px; }
+    .muted { color: var(--muted); }
+    .tiny { font-size: 0.85rem; color: var(--muted); }
+
+    .grid {
+      display: grid;
+      gap: 16px;
+      margin-top: 18px;
+    }
+    .grid.main { grid-template-columns: 1.2fr 0.8fr; }
+    .grid.three { grid-template-columns: repeat(3, 1fr); }
+    .grid.two { grid-template-columns: repeat(2, 1fr); }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: var(--radius);
+      padding: 16px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+    }
+
+    .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+    .row.spread { justify-content: space-between; }
+    .stack { display: grid; gap: 10px; }
+    label { font-size: 0.92rem; color: var(--muted); display: grid; gap: 6px; }
+
+    input, select, textarea, button {
+      font: inherit;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,0.12);
+    }
+    input, select, textarea {
+      width: 100%;
+      padding: 12px 14px;
+      background: rgba(8,10,18,0.55);
+      color: var(--text);
+    }
+    textarea { min-height: 92px; resize: vertical; }
+    button {
+      padding: 12px 16px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: white;
+      cursor: pointer;
+      font-weight: 700;
+      box-shadow: 0 10px 24px rgba(125,140,255,0.25);
+    }
+    button.secondary {
+      background: rgba(255,255,255,0.08);
+      box-shadow: none;
+    }
+    button.good { background: linear-gradient(135deg, #32c76c, #23b15d); }
+    button.warn { background: linear-gradient(135deg, #ffbe55, #ff914d); }
+    button.danger { background: linear-gradient(135deg, #ff6b6b, #d9446f); }
+    button:disabled { opacity: 0.45; cursor: not-allowed; }
+
+    .pill {
+      display: inline-flex;
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-size: 0.9rem;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .banner {
+      border-left: 4px solid var(--accent);
+      background: rgba(255,255,255,0.05);
+      padding: 12px 14px;
+      border-radius: 14px;
+    }
+
+    .question-item {
+      border: 1px solid rgba(255,255,255,0.09);
+      padding: 12px;
+      border-radius: 14px;
+      background: rgba(255,255,255,0.04);
+    }
+    .question-item.active {
+      border-color: rgba(255,79,163,0.75);
+      box-shadow: 0 0 0 1px rgba(255,79,163,0.3) inset;
+    }
+    .question-item.done { opacity: 0.7; }
+
+    .score {
+      font-size: clamp(2rem, 6vw, 4rem);
+      font-weight: 900;
+      line-height: 1;
+      margin: 8px 0;
+    }
+
+    .reveal {
+      background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.03));
+      min-height: 340px;
+      display: grid;
+      place-items: center;
+      border-radius: 22px;
+      border: 1px solid rgba(255,255,255,0.1);
+      text-align: center;
+      padding: 24px;
+      position: relative;
+      overflow: hidden;
+    }
+    .reveal::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 50% 0%, rgba(255,79,163,0.16), transparent 36%);
+      pointer-events: none;
+    }
+    .reveal h2 { font-size: clamp(1.6rem, 3vw, 2.8rem); }
+    .answer-box {
+      font-size: clamp(1.15rem, 2.5vw, 2rem);
+      font-weight: 800;
+      background: rgba(255,255,255,0.08);
+      padding: 16px 18px;
+      border-radius: 18px;
+      display: inline-block;
+      margin-top: 8px;
+    }
+    .big {
+      font-size: clamp(1.4rem, 3vw, 2.2rem);
+      font-weight: 900;
+    }
+    .status-dot {
+      width: 10px; height: 10px; border-radius: 50%; background: var(--ok); display: inline-block;
+    }
+    .qr {
+      padding: 16px;
+      border-radius: 18px;
+      background: white;
+      color: #111;
+      display: inline-block;
+      font-size: 0.88rem;
+      font-weight: 700;
+    }
+
+    video {
+      max-width: 100%;
+      border-radius: 18px;
+      background: #000;
+      max-height: 50vh;
+      margin-top: 12px;
+    }
+
+    .hidden { display: none !important; }
+    .full-width { width: 100%; }
+    .blink { animation: pulse 1.1s infinite; }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.02); }
+    }
+
+    @media (max-width: 920px) {
+      .grid.main, .grid.three, .grid.two { grid-template-columns: 1fr; }
+      .app { padding: 12px; }
+      .hero, .card { padding: 14px; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="startup-overlay show" id="startupOverlay">
+    <div class="startup-card">
+      <h2>Kies eerst je rol</h2>
+      <p class="muted">Zo ziet iedereen alleen wat voor hem of haar nodig is.</p>
+
+      <div class="role-grid">
+        <div class="role-card active" data-role-choice="host">
+          <h3>Host</h3>
+          <div class="tiny">Volledige bediening, vragen kiezen, reveal doen, score aanpassen.</div>
+        </div>
+        <div class="role-card" data-role-choice="vrijgezel">
+          <h3>Vrijgezel</h3>
+          <div class="tiny">Alleen de actieve vraag, antwoordvak en reveal.</div>
+        </div>
+        <div class="role-card" data-role-choice="viewer">
+          <h3>Kijker</h3>
+          <div class="tiny">Alleen meekijken naar vraag, reveal en score.</div>
+        </div>
+      </div>
+
+      <div class="stack" style="margin-top:16px;">
+        <label>Sessiecode
+          <input id="startupSessionCode" placeholder="Bijv. STIJN2026" />
+        </label>
+        <label>Naam vrijgezel
+          <input id="startupStagName" placeholder="Bijv. Matti" />
+        </label>
+      </div>
+
+      <div class="startup-actions">
+        <button id="startupContinueBtn">Verder</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="app">
+    <section class="hero">
+      <div class="row spread">
+        <div>
+          <div class="pill">Vrijgezellen Weekend V4 Live</div>
+          <h1>Host + vrijgezel + kijkers in één sessie</h1>
+          <p class="muted">Eén gedeelde code voor iedereen. Host bedient het spel, vrijgezel krijgt de vraag, vrienden volgen live mee.</p>
+        </div>
+        <div class="banner" style="max-width:430px;">
+          <strong>Belangrijk</strong>
+          <div class="tiny" style="margin-top:6px;">
+            Deze versie werkt volledig in <strong>demo/local mode</strong>. Voor echte multi-device live synchronisatie moet je je Firebase-config invullen en de app online zetten. De app blijft dan verder identiek werken.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card stack" id="sessionSimpleCard">
+      <div class="row spread">
+        <div>
+          <h2>Sessie</h2>
+          <div class="tiny">Eenvoudige weergave voor vrijgezel en kijkers.</div>
+        </div>
+        <div class="pill" id="simpleRolePill">Rol</div>
+      </div>
+      <div class="focus-card">
+        <div id="simpleSessionTitle"><strong>Geen sessie actief</strong></div>
+        <div id="simpleInfoText">Open de gedeelde link of vul een sessiecode in.</div>
+        <div class="pill" id="scoreMini">Score: 0</div>
+      </div>
+    </section>
+
+
+    <div class="grid main">
+      <section class="card stack" id="sessionManagementCard">
+        <div class="row spread">
+          <div>
+            <h2>Sessie</h2>
+            <div class="tiny">Maak een code, kies je rol en laat iedereen joinen.</div>
+          </div>
+          <div class="pill" id="modePill">Modus: lokaal demo</div>
+        </div>
+
+        <div class="grid three">
+          <label>Sessiecode
+            <input id="sessionCode" placeholder="BV. VRIJGEZEL2026" />
+          </label>
+          <label>Jouw rol
+            <select id="roleSelect">
+              <option value="host">Host</option>
+              <option value="vrijgezel">Vrijgezel</option>
+              <option value="viewer">Kijker</option>
+            </select>
+          </label>
+          <label>Naam vrijgezel
+            <input id="stagName" placeholder="Bijv. Tom" />
+          </label>
+        </div>
+
+        <div class="row">
+          <button id="createSessionBtn">Nieuwe sessie</button>
+          <button id="joinSessionBtn" class="secondary">Join sessie</button>
+          <button id="demoBtn" class="secondary">Laad demo</button>
+          <button id="resetBtn" class="danger">Wis sessie</button>
+        </div>
+
+        <div class="banner" id="sessionInfo">
+          Nog geen actieve sessie.
+        </div>
+      </section>
+
+      <section class="card stack" id="shareCard">
+        <h2>Publiekslink</h2>
+        <div class="tiny">Kopieer deze link of laat vrienden de sessiecode ingeven. Als je dit online host, werkt dit op meerdere gsm’s.</div>
+        <label>Deel-link
+          <input id="shareLink" readonly />
+        </label>
+        <div class="row">
+          <button id="copyLinkBtn" class="secondary">Kopieer link</button>
+          <button id="copyCodeBtn" class="secondary">Kopieer code</button>
+        </div>
+        <div class="qr">
+          QR tip: zet deze link later in een gratis QR-generator voor supersnelle instap.
+        </div>
+      </section>
+    </div>
+
+    <div class="grid main">
+      <section class="card stack" id="hostPanel">
+        <div class="row spread">
+          <div>
+            <h2>Host-bediening</h2>
+            <div class="tiny">Voeg vragen toe, activeer een vraag en reveal het opgenomen antwoord.</div>
+          </div>
+          <div class="row">
+            <span class="status-dot"></span>
+            <span class="tiny">Live spelstatus</span>
+          </div>
+        </div>
+
+        <div class="grid two">
+          <label>Vraag
+            <textarea id="newQuestionText" placeholder="Bijv. Wat is mijn favoriete snack na een avond stappen?"></textarea>
+          </label>
+          <div class="stack">
+            <label>Correct antwoord (tekst)
+              <input id="newCorrectAnswer" placeholder="Bijv. Durum kebab" />
+            </label>
+            <label>Videolink (optioneel)
+              <input id="newVideoUrl" placeholder="https://...mp4 of gedeelde videolink" />
+            </label>
+            <label>Geplande tijd (optioneel)
+              <input id="newScheduledAt" type="datetime-local" />
+            </label>
+          </div>
+        </div>
+
+        <div class="row">
+          <button id="addQuestionBtn">Vraag toevoegen</button>
+          <button id="notifyBtn" class="warn">Stuur vraag-alert</button>
+          <button id="revealBtn" class="good">Reveal video/antwoord</button>
+          <button id="nextBtn" class="secondary">Volgende vraag</button>
+        </div>
+
+        <div class="grid two">
+          <section class="stack">
+            <h3>Vragenlijst</h3>
+            <div id="questionList" class="stack"></div>
+          </section>
+          <section class="stack">
+            <h3>Score & straf</h3>
+            <div class="score" id="scoreDisplay">0</div>
+            <div class="row">
+              <button id="scorePlus" class="good">+1 punt</button>
+              <button id="scoreMinus" class="danger">-1 punt</button>
+              <button id="punishmentBtn" class="secondary">Nieuwe straf</button>
+            </div>
+            <div class="banner" id="punishmentBox">Nog geen straf gekozen.</div>
+          </section>
+        </div>
+      </section>
+
+      <section class="card stack" id="liveCard">
+        <h2>Live scherm</h2>
+        <div class="reveal" id="stageScreen">
+          <div>
+            <div class="pill">Wachten op start</div>
+            <h2 id="stageTitle">Nog geen actieve vraag</h2>
+            <p class="muted" id="stageSubtitle">Zodra de host een vraag activeert, zien vrijgezel en kijkers die hier live verschijnen.</p>
+            <div id="answerContainer" class="hidden">
+              <div class="tiny">Antwoord van de vrijgezel</div>
+              <div class="answer-box" id="liveAnswerText"></div>
+            </div>
+            <video id="stageVideo" controls class="hidden"></video>
+          </div>
+        </div>
+        <div class="row spread">
+          <div>
+            <div class="tiny">Spelstatus</div>
+            <div id="liveStatusText">Nog geen sessie actief.</div>
+          </div>
+          <div class="pill" id="countdownPill">Countdown: --:--</div>
+        </div>
+      </section>
+    </div>
+
+    <div class="grid main">
+      <section class="card stack" id="vrijgezelPanel">
+        <h2>Vrijgezel-scherm</h2>
+        <div class="tiny">De vrijgezel ziet de actieve vraag en kan antwoorden. De host kan daarna revealen.</div>
+        <div class="banner" id="vrijgezelQuestionBox">Nog geen actieve vraag.</div>
+        <label>Mijn antwoord
+          <textarea id="vrijgezelAnswer" placeholder="Typ hier het antwoord van de vrijgezel..."></textarea>
+        </label>
+        <div class="row">
+          <button id="submitAnswerBtn">Stuur antwoord</button>
+          <button id="clearAnswerBtn" class="secondary">Leeg maken</button>
+        </div>
+      </section>
+
+      <section class="card stack" id="viewerPanel">
+        <h2>Kijkers-scherm</h2>
+        <div class="tiny">Vrienden kunnen op hun eigen gsm live meevolgen zodra deze app online gehost is.</div>
+        <div class="banner">
+          <strong>Zo werkt het straks live:</strong>
+          <div class="tiny" style="margin-top:8px;">
+            1. Host maakt sessie<br>
+            2. Vrijgezel en vrienden joinen met code<br>
+            3. Host activeert vraag<br>
+            4. Iedereen ziet live dezelfde reveal
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <section class="card stack" style="margin-top:16px;">
+      <h2>Firebase invullen voor echte live modus</h2>
+      <div class="tiny">
+        Vul bovenaan in de code jouw Firebase web config in bij <code>FIREBASE_CONFIG</code>. Host dit bestand daarna op GitHub Pages of Vercel. Dan kunnen host, vrijgezel en kijkers op verschillende toestellen live synchroniseren.
+      </div>
+      <div class="banner">
+        Nodig voor live: Firebase Authentication (anoniem is genoeg), Realtime Database of Firestore. Voor video’s die iedereen moet zien, upload je ze best naar Firebase Storage of gebruik je een gedeelde videolink.
+      </div>
+    </section>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getFirestore, doc, getDoc, setDoc, onSnapshot, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    // =========================
+    // Firebase config placeholder
+    // =========================
+    const FIREBASE_CONFIG = {
+      apiKey: "AIzaSyCBKlUwxs5X4Z0i3_Po25pb3jUDIxFuL84",
+      authDomain: "vrijgezellen-8143f.firebaseapp.com",
+      projectId: "vrijgezellen-8143f",
+      storageBucket: "vrijgezellen-8143f.firebasestorage.app",
+      messagingSenderId: "89324838670",
+      appId: "1:89324838670:web:622fb70c1a921c29e9015f",
+      databaseURL: ""
+    };
+
+    const punishmentList = [
+      "Doe een dramatische liefdesverklaring aan een boom.",
+      "Zing 20 seconden een fout liefdeslied.",
+      "Doe een catwalk met een denkbeeldige trouwjurk.",
+      "Laat de groep je kapsel voor 1 minuut kiezen.",
+      "Bel iemand en zeg: 'Ik ben klaar voor Ibiza'.",
+      "Doe een slow motion movie-scène met de host.",
+      "Vertel je slechtste openingszin ooit.",
+      "Doe een heel serieuze speech over frieten."
+    ];
+
+    const els = {
+      sessionCode: document.getElementById('sessionCode'),
+      roleSelect: document.getElementById('roleSelect'),
+      stagName: document.getElementById('stagName'),
+      createSessionBtn: document.getElementById('createSessionBtn'),
+      joinSessionBtn: document.getElementById('joinSessionBtn'),
+      demoBtn: document.getElementById('demoBtn'),
+      resetBtn: document.getElementById('resetBtn'),
+      sessionInfo: document.getElementById('sessionInfo'),
+      shareLink: document.getElementById('shareLink'),
+      copyLinkBtn: document.getElementById('copyLinkBtn'),
+      copyCodeBtn: document.getElementById('copyCodeBtn'),
+      modePill: document.getElementById('modePill'),
+      sessionManagementCard: document.getElementById('sessionManagementCard'),
+      shareCard: document.getElementById('shareCard'),
+      sessionSimpleCard: document.getElementById('sessionSimpleCard'),
+      simpleRolePill: document.getElementById('simpleRolePill'),
+      simpleSessionTitle: document.getElementById('simpleSessionTitle'),
+      simpleInfoText: document.getElementById('simpleInfoText'),
+      scoreMini: document.getElementById('scoreMini'),
+      startupOverlay: document.getElementById('startupOverlay'),
+      startupSessionCode: document.getElementById('startupSessionCode'),
+      startupStagName: document.getElementById('startupStagName'),
+      startupContinueBtn: document.getElementById('startupContinueBtn'),
+
+      hostPanel: document.getElementById('hostPanel'),
+      newQuestionText: document.getElementById('newQuestionText'),
+      newCorrectAnswer: document.getElementById('newCorrectAnswer'),
+      newVideoUrl: document.getElementById('newVideoUrl'),
+      newScheduledAt: document.getElementById('newScheduledAt'),
+      addQuestionBtn: document.getElementById('addQuestionBtn'),
+      notifyBtn: document.getElementById('notifyBtn'),
+      revealBtn: document.getElementById('revealBtn'),
+      nextBtn: document.getElementById('nextBtn'),
+      questionList: document.getElementById('questionList'),
+      scoreDisplay: document.getElementById('scoreDisplay'),
+      scorePlus: document.getElementById('scorePlus'),
+      scoreMinus: document.getElementById('scoreMinus'),
+      punishmentBtn: document.getElementById('punishmentBtn'),
+      punishmentBox: document.getElementById('punishmentBox'),
+
+      stageTitle: document.getElementById('stageTitle'),
+      stageSubtitle: document.getElementById('stageSubtitle'),
+      answerContainer: document.getElementById('answerContainer'),
+      liveAnswerText: document.getElementById('liveAnswerText'),
+      stageVideo: document.getElementById('stageVideo'),
+      liveStatusText: document.getElementById('liveStatusText'),
+      countdownPill: document.getElementById('countdownPill'),
+
+      vrijgezelPanel: document.getElementById('vrijgezelPanel'),
+      vrijgezelQuestionBox: document.getElementById('vrijgezelQuestionBox'),
+      vrijgezelAnswer: document.getElementById('vrijgezelAnswer'),
+      submitAnswerBtn: document.getElementById('submitAnswerBtn'),
+      clearAnswerBtn: document.getElementById('clearAnswerBtn'),
+      viewerPanel: document.getElementById('viewerPanel')
+    };
+
+    const qs = new URLSearchParams(location.search);
+    if (qs.get('code')) els.sessionCode.value = qs.get('code');
+    if (qs.get('role')) els.roleSelect.value = qs.get('role');
+
+    const storageKey = 'vrijgezellen_v4_live_sessions';
+    const uiKey = 'vrijgezellen_v4_live_ui';
+    let db = loadSessions();
+    let current = loadUI() || {
+      joinedCode: '',
+      role: els.roleSelect.value,
+      stagName: '',
+      activeQuestionId: null
+    };
+
+    let unsubscribeSession = null;
+    let firestore = null;
+    let firebaseAvailable = false;
+
+    try {
+      firebaseAvailable = isFirebaseConfigFilled(FIREBASE_CONFIG);
+      if (firebaseAvailable) {
+        const app = initializeApp(FIREBASE_CONFIG);
+        firestore = getFirestore(app);
+      }
+    } catch (err) {
+      console.error('Firebase init fout:', err);
+      firebaseAvailable = false;
+    }
+
+    els.modePill.textContent = firebaseAvailable ? 'Modus: live Firebase actief' : 'Modus: lokaal demo';
+
+    function isFirebaseConfigFilled(cfg) {
+      return Object.values(cfg).some(v => String(v || '').trim() !== '');
+    }
+
+    function uid() {
+      return Math.random().toString(36).slice(2, 10);
+    }
+
+    function loadSessions() {
+      try { return JSON.parse(localStorage.getItem(storageKey)) || {}; }
+      catch { return {}; }
+    }
+
+    function saveSessions() {
+      localStorage.setItem(storageKey, JSON.stringify(db));
+    }
+
+    function loadUI() {
+      try { return JSON.parse(localStorage.getItem(uiKey)); }
+      catch { return null; }
+    }
+
+    function saveUI() {
+      localStorage.setItem(uiKey, JSON.stringify(current));
+    }
+
+    function setRoleChoice(role) {
+      current.role = role;
+      els.roleSelect.value = role;
+      document.querySelectorAll('[data-role-choice]').forEach(card => {
+        card.classList.toggle('active', card.dataset.roleChoice === role);
+      });
+      saveUI();
+    }
+
+    function openStartupOverlay() {
+      els.startupOverlay.classList.add('show');
+      els.startupSessionCode.value = current.joinedCode || els.sessionCode.value || '';
+      els.startupStagName.value = current.stagName || els.stagName.value || '';
+      setRoleChoice(current.role || 'host');
+    }
+
+    function closeStartupOverlay() {
+      els.startupOverlay.classList.remove('show');
+    }
+
+    function cleanSessionForCloud(session) {
+      return JSON.parse(JSON.stringify(session));
+    }
+
+    async function pushSessionToCloud(session) {
+      if (!firebaseAvailable || !firestore || !session?.code) return;
+      try {
+        await setDoc(doc(firestore, 'sessions', session.code), cleanSessionForCloud(session));
+      } catch (err) {
+        console.error('Kon sessie niet opslaan in Firebase:', err);
+      }
+    }
+
+    async function removeSessionFromCloud(code) {
+      if (!firebaseAvailable || !firestore || !code) return;
+      try {
+        await deleteDoc(doc(firestore, 'sessions', code));
+      } catch (err) {
+        console.error('Kon sessie niet verwijderen uit Firebase:', err);
+      }
+    }
+
+    async function fetchSessionFromCloud(code) {
+      if (!firebaseAvailable || !firestore || !code) return null;
+      try {
+        const snap = await getDoc(doc(firestore, 'sessions', code));
+        return snap.exists() ? snap.data() : null;
+      } catch (err) {
+        console.error('Kon sessie niet ophalen uit Firebase:', err);
+        return null;
+      }
+    }
+
+    function subscribeToSession(code) {
+      if (!firebaseAvailable || !firestore || !code) return;
+      if (unsubscribeSession) unsubscribeSession();
+      unsubscribeSession = onSnapshot(doc(firestore, 'sessions', code), (snap) => {
+        if (!snap.exists()) {
+          delete db[code];
+          saveSessions();
+          render();
+          return;
+        }
+        db[code] = snap.data();
+        saveSessions();
+        render();
+        pingVisualAlert(db[code]);
+      }, (err) => {
+        console.error('Live sync fout:', err);
+      });
+    }
+
+    function blankSession(code, name='Vrijgezel') {
+      return {
+        code,
+        stagName: name,
+        score: 0,
+        createdAt: Date.now(),
+        activeQuestionId: null,
+        reveal: false,
+        lastAlertAt: null,
+        lastPunishment: '',
+        questions: []
+      };
+    }
+
+    function demoSession(code='DEMOLOVE') {
+      return {
+        code,
+        stagName: 'Demo Vrijgezel',
+        score: 2,
+        createdAt: Date.now(),
+        activeQuestionId: 'q1',
+        reveal: false,
+        lastAlertAt: null,
+        lastPunishment: 'Doe een dramatische liefdesverklaring aan een boom.',
+        questions: [
+          { id: 'q1', text: 'Wat is mijn favoriete snack na het stappen?', correctAnswer: 'Durum kebab', videoUrl: '', scheduledAt: '', answerFromVrijgezel: '', done: false },
+          { id: 'q2', text: 'Wat is mijn meest irritante gewoonte?', correctAnswer: 'Mijn sokken overal laten slingeren', videoUrl: '', scheduledAt: '', answerFromVrijgezel: '', done: false },
+          { id: 'q3', text: 'Waar zou ik het liefst op huwelijksreis gaan?', correctAnswer: 'Ibiza', videoUrl: '', scheduledAt: '', answerFromVrijgezel: '', done: false }
+        ]
+      };
+    }
+
+    function getSession() {
+      return db[current.joinedCode] || null;
+    }
+
+    function formatCountdown(targetIso) {
+      if (!targetIso) return '--:--';
+      const diff = new Date(targetIso).getTime() - Date.now();
+      if (Number.isNaN(diff)) return '--:--';
+      if (diff <= 0) return 'NU';
+      const total = Math.floor(diff / 1000);
+      const h = Math.floor(total / 3600);
+      const m = Math.floor((total % 3600) / 60);
+      const s = total % 60;
+      return h > 0 ? `${h}u ${String(m).padStart(2,'0')}m` : `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    }
+
+    function nextScheduledQuestion(session) {
+      return [...session.questions]
+        .filter(q => q.scheduledAt && !q.done)
+        .sort((a,b) => new Date(a.scheduledAt) - new Date(b.scheduledAt))[0] || null;
+    }
+
+    function updateShareLink() {
+      const code = (els.sessionCode.value || current.joinedCode || '').trim();
+      const url = new URL(location.href);
+      url.searchParams.set('code', code);
+      url.searchParams.set('role', 'viewer');
+      els.shareLink.value = code ? url.toString() : '';
+    }
+
+    function updateVisibility() {
+      const role = current.role;
+      document.body.classList.remove('role-host', 'role-vrijgezel', 'role-viewer');
+      document.body.classList.add(`role-${role}`);
+
+      els.hostPanel.classList.toggle('hidden', role !== 'host');
+      els.vrijgezelPanel.classList.toggle('hidden', role !== 'vrijgezel');
+      els.viewerPanel.classList.toggle('hidden', role !== 'viewer');
+
+      els.sessionManagementCard.classList.toggle('hidden', role !== 'host');
+      els.shareCard.classList.toggle('hidden', role !== 'host');
+      els.sessionSimpleCard.classList.toggle('hidden', role === 'host');
+    }
+
+    function render() {
+      current.role = els.roleSelect.value;
+      current.stagName = els.stagName.value.trim();
+      saveUI();
+      updateVisibility();
+      updateShareLink();
+
+      const session = getSession();
+      if (!session) {
+        els.sessionInfo.textContent = 'Nog geen actieve sessie.';
+        els.simpleRolePill.textContent = `Rol: ${current.role}`;
+        els.simpleSessionTitle.innerHTML = '<strong>Geen sessie actief</strong>';
+        els.simpleInfoText.textContent = current.role === 'vrijgezel' ? 'Wacht tot de host een vraag start.' : 'Wacht tot de host live gaat.';
+        els.questionList.innerHTML = '<div class="tiny">Geen vragen geladen.</div>';
+        els.scoreDisplay.textContent = '0';
+        els.stageTitle.textContent = 'Nog geen actieve vraag';
+        els.stageSubtitle.textContent = 'Maak of join eerst een sessie.';
+        els.liveStatusText.textContent = 'Nog geen sessie actief.';
+        els.vrijgezelQuestionBox.textContent = 'Nog geen actieve vraag.';
+        els.answerContainer.classList.add('hidden');
+        els.stageVideo.classList.add('hidden');
+        return;
+      }
+
+      els.stagName.value = session.stagName || current.stagName || '';
+      els.sessionInfo.innerHTML = `<strong>Sessie ${session.code}</strong><br><span class="tiny">Rol: ${current.role} · Vrijgezel: ${session.stagName || '—'} · Vragen: ${session.questions.length}</span>`;
+      els.simpleRolePill.textContent = current.role === 'vrijgezel' ? 'Rol: vrijgezel' : 'Rol: kijker';
+      els.simpleSessionTitle.innerHTML = `<strong>Sessie ${session.code}</strong> · Vrijgezel: ${escapeHtml(session.stagName || '—')}`;
+      els.scoreDisplay.textContent = String(session.score || 0);
+      els.scoreMini.textContent = `Score: ${String(session.score || 0)}`;
+      els.punishmentBox.textContent = session.lastPunishment || 'Nog geen straf gekozen.';
+
+      const active = session.questions.find(q => q.id === session.activeQuestionId) || null;
+      const nextQ = nextScheduledQuestion(session);
+      els.countdownPill.textContent = `Countdown: ${nextQ ? formatCountdown(nextQ.scheduledAt) : '--:--'}`;
+
+      els.questionList.innerHTML = '';
+      session.questions.forEach((q, index) => {
+        const div = document.createElement('div');
+        div.className = 'question-item' + (q.id === session.activeQuestionId ? ' active' : '') + (q.done ? ' done' : '');
+        div.innerHTML = `
+          <div class="row spread">
+            <strong>${index + 1}. ${escapeHtml(q.text)}</strong>
+            <span class="pill">${q.done ? 'Gedaan' : q.id === session.activeQuestionId ? 'Actief' : 'Wacht'}</span>
+          </div>
+          <div class="tiny" style="margin:8px 0;">${q.scheduledAt ? 'Gepland: ' + new Date(q.scheduledAt).toLocaleString() : 'Geen planning'}</div>
+          <div class="row">
+            <button class="secondary select-q" data-id="${q.id}">Activeer</button>
+            <button class="secondary mark-done" data-id="${q.id}">Markeer gedaan</button>
+          </div>
+        `;
+        els.questionList.appendChild(div);
+      });
+
+      els.questionList.querySelectorAll('.select-q').forEach(btn => {
+        btn.onclick = () => {
+          if (current.role !== 'host') return;
+          session.activeQuestionId = btn.dataset.id;
+          session.reveal = false;
+          saveSession(session);
+        };
+      });
+      els.questionList.querySelectorAll('.mark-done').forEach(btn => {
+        btn.onclick = () => {
+          const q = session.questions.find(x => x.id === btn.dataset.id);
+          if (!q) return;
+          q.done = true;
+          saveSession(session);
+        };
+      });
+
+      if (active) {
+        els.stageTitle.textContent = active.text;
+        if (!session.reveal) {
+          els.stageSubtitle.textContent = current.role === 'vrijgezel'
+            ? 'Beantwoord hieronder.'
+            : 'Wachten op reveal.';
+          els.answerContainer.classList.toggle('hidden', !active.answerFromVrijgezel);
+          els.liveAnswerText.textContent = active.answerFromVrijgezel || '';
+          els.stageVideo.classList.add('hidden');
+          els.stageVideo.pause();
+          els.stageVideo.removeAttribute('src');
+        } else {
+          els.stageSubtitle.textContent = `Correct antwoord: ${active.correctAnswer || '—'}`;
+          els.answerContainer.classList.toggle('hidden', !active.answerFromVrijgezel);
+          els.liveAnswerText.textContent = active.answerFromVrijgezel || 'Geen antwoord ingevuld';
+          if (active.videoUrl) {
+            els.stageVideo.src = active.videoUrl;
+            els.stageVideo.classList.remove('hidden');
+          } else {
+            els.stageVideo.classList.add('hidden');
+          }
+        }
+        els.vrijgezelQuestionBox.innerHTML = `<strong>Actieve vraag:</strong><br>${escapeHtml(active.text)}`;
+      } else {
+        els.stageTitle.textContent = 'Nog geen actieve vraag';
+        els.stageSubtitle.textContent = 'De host kan hierboven een vraag activeren.';
+        els.answerContainer.classList.add('hidden');
+        els.stageVideo.classList.add('hidden');
+        els.vrijgezelQuestionBox.textContent = 'Nog geen actieve vraag.';
+      }
+
+      const statusBits = [
+        `Sessie ${session.code}`,
+        `rol ${current.role}`,
+        active ? `actief: ${active.text}` : 'geen actieve vraag',
+        session.lastAlertAt ? `laatste alert ${new Date(session.lastAlertAt).toLocaleTimeString()}` : 'nog geen alert'
+      ];
+      els.liveStatusText.textContent = statusBits.join(' · ');
+
+      if (current.role === 'vrijgezel') {
+        els.simpleInfoText.textContent = active
+          ? (session.reveal ? 'Reveal bezig.' : 'Beantwoord de vraag hieronder.')
+          : 'Wacht op de volgende vraag.';
+      } else if (current.role === 'viewer') {
+        els.simpleInfoText.textContent = active
+          ? (session.reveal ? 'Reveal bezig.' : 'Vraag staat live.')
+          : 'Wacht op de volgende vraag.';
+      }
+    }
+
+    function saveSession(session) {
+      db[session.code] = structuredClone(session);
+      saveSessions();
+      render();
+      pingVisualAlert(session);
+      pushSessionToCloud(session);
+    }
+
+    function pingVisualAlert(session) {
+      if (!session.lastAlertAt) return;
+      const age = Date.now() - session.lastAlertAt;
+      document.title = age < 4000 ? '🔔 Nieuwe vraag!' : 'Vrijgezellen Weekend V4 Live';
+      if (age < 4000 && navigator.vibrate) navigator.vibrate([200, 120, 300]);
+    }
+
+    async function createOrJoin(create = false, useDemo = false) {
+      const code = (els.sessionCode.value || '').trim().toUpperCase();
+      const role = els.roleSelect.value;
+      const stagName = (els.stagName.value || 'Vrijgezel').trim();
+      if (!code) {
+        alert('Geef eerst een sessiecode in.');
+        return;
+      }
+
+      if (create || useDemo) {
+        const freshSession = useDemo ? demoSession(code) : blankSession(code, stagName);
+        db[code] = freshSession;
+        saveSessions();
+        await pushSessionToCloud(freshSession);
+      }
+
+      if (firebaseAvailable) {
+        const cloudSession = await fetchSessionFromCloud(code);
+        if (cloudSession) {
+          db[code] = cloudSession;
+          saveSessions();
+        }
+      }
+
+      if (!db[code]) {
+        alert('Deze sessie bestaat nog niet. Maak ze eerst aan.');
+        return;
+      }
+
+      current.joinedCode = code;
+      current.role = role;
+      current.stagName = stagName;
+      saveUI();
+      subscribeToSession(code);
+      render();
+    }
+
+    function randomPunishment() {
+      return punishmentList[Math.floor(Math.random() * punishmentList.length)];
+    }
+
+    function escapeHtml(str='') {
+      return str
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
+    }
+
+    function activateNextQuestion(session) {
+      const next = session.questions.find(q => !q.done && q.id !== session.activeQuestionId) || null;
+      session.activeQuestionId = next ? next.id : null;
+      session.reveal = false;
+      saveSession(session);
+    }
+
+    els.createSessionBtn.onclick = () => createOrJoin(true, false);
+    els.joinSessionBtn.onclick = () => createOrJoin(false, false);
+    els.demoBtn.onclick = () => createOrJoin(true, true);
+    els.resetBtn.onclick = async () => {
+      const code = (current.joinedCode || els.sessionCode.value || '').trim().toUpperCase();
+      if (!code) return alert('Geen sessiecode gevonden.');
+      if (!confirm(`Sessie ${code} wissen?`)) return;
+      delete db[code];
+      saveSessions();
+      await removeSessionFromCloud(code);
+      if (unsubscribeSession) {
+        unsubscribeSession();
+        unsubscribeSession = null;
+      }
+      current.joinedCode = '';
+      saveUI();
+      render();
+    };
+
+    els.copyLinkBtn.onclick = async () => {
+      if (!els.shareLink.value) return;
+      await navigator.clipboard.writeText(els.shareLink.value);
+      alert('Link gekopieerd.');
+    };
+    els.copyCodeBtn.onclick = async () => {
+      const code = (els.sessionCode.value || current.joinedCode || '').trim().toUpperCase();
+      if (!code) return;
+      await navigator.clipboard.writeText(code);
+      alert('Code gekopieerd.');
+    };
+
+    els.roleSelect.onchange = () => {
+      current.role = els.roleSelect.value;
+      saveUI();
+      updateShareLink();
+      setRoleChoice(current.role);
+      render();
+    };
+    els.sessionCode.oninput = updateShareLink;
+    els.stagName.oninput = () => {
+      const session = getSession();
+      if (session && current.role === 'host') {
+        session.stagName = els.stagName.value.trim();
+        saveSession(session);
+      } else {
+        current.stagName = els.stagName.value.trim();
+        saveUI();
+      }
+    };
+
+    els.addQuestionBtn.onclick = () => {
+      const session = getSession();
+      if (!session) return alert('Maak of join eerst een sessie.');
+      const text = els.newQuestionText.value.trim();
+      if (!text) return alert('Vul een vraag in.');
+      session.questions.push({
+        id: uid(),
+        text,
+        correctAnswer: els.newCorrectAnswer.value.trim(),
+        videoUrl: els.newVideoUrl.value.trim(),
+        scheduledAt: els.newScheduledAt.value || '',
+        answerFromVrijgezel: '',
+        done: false
+      });
+      if (!session.activeQuestionId) session.activeQuestionId = session.questions[0].id;
+      saveSession(session);
+      els.newQuestionText.value = '';
+      els.newCorrectAnswer.value = '';
+      els.newVideoUrl.value = '';
+      els.newScheduledAt.value = '';
+    };
+
+    els.notifyBtn.onclick = () => {
+      const session = getSession();
+      if (!session) return;
+      session.lastAlertAt = Date.now();
+      saveSession(session);
+      alert(firebaseAvailable ? 'Vraag-alert verstuurd naar alle verbonden toestellen.' : 'Vraag-alert lokaal verstuurd. Zet Firebase live om alle toestellen mee te laten volgen.');
+    };
+
+    els.revealBtn.onclick = () => {
+      const session = getSession();
+      if (!session || !session.activeQuestionId) return;
+      session.reveal = true;
+      saveSession(session);
+    };
+
+    els.nextBtn.onclick = () => {
+      const session = getSession();
+      if (!session) return;
+      const active = session.questions.find(q => q.id === session.activeQuestionId);
+      if (active) active.done = true;
+      activateNextQuestion(session);
+    };
+
+    els.scorePlus.onclick = () => {
+      const session = getSession();
+      if (!session) return;
+      session.score += 1;
+      saveSession(session);
+    };
+    els.scoreMinus.onclick = () => {
+      const session = getSession();
+      if (!session) return;
+      session.score -= 1;
+      saveSession(session);
+    };
+    els.punishmentBtn.onclick = () => {
+      const session = getSession();
+      if (!session) return;
+      session.lastPunishment = randomPunishment();
+      saveSession(session);
+    };
+
+    els.submitAnswerBtn.onclick = () => {
+      const session = getSession();
+      if (!session || !session.activeQuestionId) return alert('Nog geen actieve vraag.');
+      const active = session.questions.find(q => q.id === session.activeQuestionId);
+      if (!active) return;
+      active.answerFromVrijgezel = els.vrijgezelAnswer.value.trim();
+      saveSession(session);
+      alert('Antwoord opgeslagen.');
+    };
+    els.clearAnswerBtn.onclick = () => { els.vrijgezelAnswer.value = ''; };
+
+    document.querySelectorAll('[data-role-choice]').forEach(card => {
+      card.onclick = () => setRoleChoice(card.dataset.roleChoice);
+    });
+
+    els.startupContinueBtn.onclick = async () => {
+      const code = (els.startupSessionCode.value || '').trim().toUpperCase();
+      const stagName = (els.startupStagName.value || '').trim();
+
+      if (!code) {
+        alert('Vul eerst een sessiecode in.');
+        return;
+      }
+
+      els.sessionCode.value = code;
+      if (stagName) {
+        els.stagName.value = stagName;
+        current.stagName = stagName;
+      }
+      current.joinedCode = code;
+      saveUI();
+
+      if (firebaseAvailable) {
+        const existing = await fetchSessionFromCloud(code);
+        if (existing) {
+          db[code] = existing;
+          saveSessions();
+          subscribeToSession(code);
+        }
+      } else if (db[code]) {
+        subscribeToSession(code);
+      }
+
+      closeStartupOverlay();
+      render();
+    };
+
+
+    setInterval(() => {
+      if (!firebaseAvailable) db = loadSessions();
+      render();
+    }, 1000);
+
+    document.addEventListener('visibilitychange', () => render());
+    window.addEventListener('storage', () => { if (!firebaseAvailable) { db = loadSessions(); render(); } });
+
+    const params = new URLSearchParams(location.search);
+    const codeFromUrl = (params.get('code') || '').trim().toUpperCase();
+    const roleFromUrl = (params.get('role') || '').trim();
+
+    if (current.joinedCode) els.sessionCode.value = current.joinedCode;
+    if (current.role) els.roleSelect.value = current.role;
+    if (current.stagName) els.stagName.value = current.stagName;
+
+    if (codeFromUrl) {
+      els.sessionCode.value = codeFromUrl;
+      current.joinedCode = codeFromUrl;
+      if (roleFromUrl && ['host', 'vrijgezel', 'viewer'].includes(roleFromUrl)) {
+        els.roleSelect.value = roleFromUrl;
+        current.role = roleFromUrl;
+      }
+      saveUI();
+      subscribeToSession(codeFromUrl);
+    } else if (current.joinedCode) {
+      subscribeToSession(current.joinedCode);
+    }
+
+    updateShareLink();
+    render();
+    openStartupOverlay();
+  </script>
+</body>
+</html>

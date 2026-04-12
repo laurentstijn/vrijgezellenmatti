@@ -1,0 +1,8 @@
+node_modules/
+push-sender-deps/
+service-account.json
+*.local
+.DS_Store
+firebase-debug.log
+.firebase/
+functions/node_modules/

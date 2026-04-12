@@ -664,11 +664,15 @@ async function sendOneSignalPush(title, body) {
     });
     
     if (response.ok) {
+      alert('✅ OneSignal push succesvol verzonden!');
       console.log('✅ OneSignal push verstuurd!', await response.json());
     } else {
-      console.error('❌ OneSignal API error:', await response.text());
+      const errTxt = await response.text();
+      alert('❌ Fout bij versturen! OneSignal zegt:\n' + errTxt);
+      console.error('❌ OneSignal API error:', errTxt);
     }
   } catch (err) {
+    alert('❌ Netwerkfout by pushen: ' + err.message);
     console.error('❌ Netwerkfout bij pushen via OneSignal:', err);
   }
 }

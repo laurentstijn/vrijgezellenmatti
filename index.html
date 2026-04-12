@@ -214,6 +214,8 @@ OneSignalDeferred.push(async function(OneSignal) {
     appId: ONESIGNAL_APP_ID,
     notifyButton: { enable: false },
     allowLocalhostAsSecureOrigin: true,
+    serviceWorkerParam: { scope: "/vrijgezellenmatti/" },
+    serviceWorkerPath: "vrijgezellenmatti/OneSignalSDKWorker.js"
   });
   
   if (OneSignal.User.PushSubscription.optedIn) {
@@ -333,7 +335,7 @@ async function joinSession(code){
     if (state.lastAlertAt && state.lastAlertAt !== lastSeenAlert) {
       lastSeenAlert = state.lastAlertAt;
       beep();
-      if(role !== 'host') alert('🔔 Opgelet! De host heeft een melding gestuurd.');
+      // Verwijder alert popup, gebruik enkel echte Push Notificaties
     }
     if (previousActiveId !== state.activeId && role !== 'host' && state.activeId) {
       const q = state.questions.find(x => x.id === state.activeId);

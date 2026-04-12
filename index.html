@@ -179,7 +179,7 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc, onSnapshot, collection, addDoc, deleteDoc, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { getMessaging, getToken, isSupported } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging.js";
 
 const firebaseConfig = {
@@ -205,6 +205,10 @@ let unsubscribe = null;
 let lastSeenAlert = 0;
 let deferredPrompt = null;
 let swReg = null;
+
+// Uniek apparaat-ID voor token beheer
+if (!prefs.deviceId) { prefs.deviceId = Math.random().toString(36).slice(2,12); savePrefs(); }
+const DEVICE_ID = prefs.deviceId;
 
 const el = {
   rolePicker: document.getElementById('rolePicker'),
@@ -313,12 +317,12 @@ async function joinSession(code){
     if (state.lastAlertAt && state.lastAlertAt !== lastSeenAlert) {
       lastSeenAlert = state.lastAlertAt;
       beep();
-      if(role !== 'host') {
-        alert('Nieuwe vraag klaar.');
-      }
+      showLocalNotification('🔔 Opgelet!', 'De host heeft een melding gestuurd.');
     }
     if (previousActiveId !== state.activeId && role !== 'host' && state.activeId) {
+      const q = state.questions.find(x => x.id === state.activeId);
       beep();
+      showLocalNotification('❓ Nieuwe vraag!', q?.text || 'Open de app voor de volgende vraag.');
     }
   }, (err) => {
     console.error(err);
@@ -584,12 +588,15 @@ async function enablePush() {
     prefs.pushToken = token;
     savePrefs();
 
-    el.pushPill.textContent = 'Push: klaar';
-    el.pushHelp.textContent = 'Push token aangemaakt. Volgende stap: een serverfunctie of handmatige FCM send gebruiken om dit token te targeten.';
+    // Token opslaan in Firestore zodat de Cloud Function het kan gebruiken
+    await savePushToken(token);
+
+    el.pushPill.textContent = 'Push: klaar ✓';
+    el.pushHelp.textContent = '✅ Push-meldingen actief! Je ontvangt meldingen ook als de telefoon in je zak steekt.';
   } catch (err) {
     console.error(err);
     el.pushPill.textContent = 'Push: fout';
-    el.pushHelp.textContent = 'Push setup mislukt. Kijk in console of VAPID key klopt.';
+    el.pushHelp.textContent = 'Push setup mislukt: ' + (err.message || 'Kijk in console of VAPID key klopt.');
   }
 }
 
@@ -604,6 +611,38 @@ el.copyDeepLinkBtn.onclick = async () => {
   el.pushHelp.textContent = 'Deeplink gekopieerd.';
 };
 
+// Token opslaan in Firestore (subcollectie: sessions/{code}/tokens/{deviceId})
+async function savePushToken(token) {
+  if (!state.sessionCode || !token) return;
+  const tokenRef = doc(db, 'sessions', state.sessionCode, 'tokens', DEVICE_ID);
+  await setDoc(tokenRef, {
+    token,
+    deviceId: DEVICE_ID,
+    role,
+    updatedAt: Date.now()
+  });
+  console.log('Push token opgeslagen in Firestore voor sessie:', state.sessionCode);
+}
+
+// Lokale notificatie tonen als de app op de voorgrond staat
+function showLocalNotification(title, body) {
+  if (Notification.permission !== 'granted') return;
+  // Gebruik de service worker voor consistente weergave
+  if (swReg) {
+    swReg.showNotification(title, {
+      body,
+      icon: './icon-192.png',
+      badge: './icon-192.png',
+      vibrate: [200, 100, 200, 100, 400],
+      requireInteraction: true,
+      tag: 'vrijgezellen-vraag',
+      data: { url: location.href }
+    }).catch(() => new Notification(title, {body, icon:'./icon-192.png'}));
+  } else {
+    new Notification(title, {body, icon: './icon-192.png'});
+  }
+}
+
 function beep(){
   try{
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -613,11 +652,11 @@ function beep(){
     o.frequency.value = 880;
     o.connect(g); g.connect(ctx.destination);
     g.gain.setValueAtTime(0.001, ctx.currentTime);
-    g.gain.exponentialRampToValueAtTime(0.15, ctx.currentTime + 0.01);
-    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
+    g.gain.exponentialRampToValueAtTime(0.18, ctx.currentTime + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.45);
     o.start();
-    o.stop(ctx.currentTime + 0.38);
-    if(navigator.vibrate) navigator.vibrate([200,120,250]);
+    o.stop(ctx.currentTime + 0.5);
+    if(navigator.vibrate) navigator.vibrate([200,100,200,100,400]);
   }catch{}
 }
 
@@ -652,8 +691,12 @@ render();
 registerPWAStuff();
 
 if (prefs.sessionCode) {
-  joinSession(prefs.sessionCode).then(() => {
+  joinSession(prefs.sessionCode).then(async () => {
     el.rolePicker.classList.add('hidden');
+    // Herregistreer push token bij herstart sessie
+    if (prefs.pushToken) {
+      await savePushToken(prefs.pushToken).catch(console.error);
+    }
   }).catch((err) => {
     console.error(err);
     el.syncPill.textContent = 'Sync: fout';

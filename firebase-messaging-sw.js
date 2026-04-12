@@ -12,15 +12,46 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
+// Achtergrondmeldingen — werkt ook als de telefoon in je zak steekt
 messaging.onBackgroundMessage((payload) => {
-  const title = payload.notification?.title || 'Vrijgezellen vraag';
+  const title = payload.notification?.title || '🎉 Vrijgezellen Weekend';
+  const body  = payload.notification?.body  || 'Open de app voor de volgende vraag!';
+
   const options = {
-    body: payload.notification?.body || 'Open de app voor de volgende vraag.',
+    body,
     icon: './icon-192.png',
     badge: './icon-192.png',
+    // Vibratiepatroon: kort-kort-lang
+    vibrate: [200, 100, 200, 100, 400],
+    // Blijft zichtbaar tot gebruiker interactie
+    requireInteraction: true,
+    // Voorkomt stapelen van meerdere meldingen
+    tag: 'vrijgezellen-vraag',
+    // Actie knop
+    actions: [{ action: 'open', title: '📲 Open app' }],
     data: {
       url: payload.fcmOptions?.link || './'
     }
   };
+
   self.registration.showNotification(title, options);
+});
+
+// Klik op notificatie → open/focus de app
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const target = event.notification?.data?.url || './';
+
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      // Zoek een al open venster en focus dat
+      for (const client of clientList) {
+        if (client.url.includes(self.location.origin) && 'focus' in client) {
+          return client.focus();
+        }
+      }
+      // Anders open een nieuw venster
+      if (clients.openWindow) return clients.openWindow(target);
+    })
+  );
 });

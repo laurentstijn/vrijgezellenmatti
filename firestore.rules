@@ -1,0 +1,15 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Sessie documenten: iedereen kan lezen/schrijven (app is privé voor vrienden)
+    match /sessions/{sessionCode} {
+      allow read, write: if true;
+
+      // Push tokens subcollectie: alleen lezen door Cloud Functions (server-side)
+      // Apparaten mogen hun eigen token schrijven
+      match /tokens/{deviceId} {
+        allow read, write: if true;
+      }
+    }
+  }
+}

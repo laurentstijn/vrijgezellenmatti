@@ -571,7 +571,12 @@ async function registerPWAStuff() {
 
 async function enablePush() {
   if (!window.OneSignal) {
-    alert('OneSignal niet geladen. Ben je verbonden met internet?');
+    if (navigator.vendor === "Apple Computer, Inc.") {
+      alert('Apple blokkeert meldingen in de Safari browser! Je MOET deze website eerst aan je beginscherm toevoegen (via het deelsymbool), en de app openen vanaf het beginscherm om pushmeldingen te kunnen aanzetten.');
+      el.pushHelp.textContent = 'Voeg de app toe aan het beginscherm via Safari om dit te laten werken.';
+    } else {
+      alert('OneSignal niet geladen. Ben je verbonden met internet of gebruik je een ad-blocker?');
+    }
     return;
   }
   

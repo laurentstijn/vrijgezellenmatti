@@ -6,6 +6,8 @@
   <title>Vrijgezellen PWA Push</title>
   <meta name="theme-color" content="#ff4fa3" />
   <link rel="manifest" href="./manifest.webmanifest" />
+  <!-- OneSignal Web SDK -->
+  <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
   <style>
     :root{
       --bg:#10131d; --card:#1a1f2e; --card2:#22283a; --text:#f5f7ff; --muted:#b9c0d9;
@@ -180,7 +182,6 @@
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getFirestore, doc, getDoc, setDoc, onSnapshot, collection, addDoc, deleteDoc, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-import { getMessaging, getToken, isSupported } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCBKlUwxs5X4Z0i3_Po25pb3jUDIxFuL84",
@@ -191,8 +192,9 @@ const firebaseConfig = {
   appId: "1:89324838670:web:622fb70c1a921c29e9015f"
 };
 
-// VUL DIT NOG IN vanuit Firebase Cloud Messaging > Web push certificates
-const VAPID_KEY = "BAuEcvOej-GR8VM38XxtdWYM1k-njRrVMP8ZJIPG_dF-E-9aLjH6KAwh23T6w2oXunZVXcaL_tbT9HYB2g";
+// VUL DIT NOG IN vanuit je OneSignal Dashboard
+const ONESIGNAL_APP_ID = "VUL_HIER_JE_ONESIGNAL_APP_ID_IN";
+const ONESIGNAL_REST_API_KEY = "VUL_HIER_JE_ONESIGNAL_REST_API_KEY_IN";
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
@@ -204,7 +206,21 @@ let role = prefs.role || 'host';
 let unsubscribe = null;
 let lastSeenAlert = 0;
 let deferredPrompt = null;
-let swReg = null;
+
+// Initialiseer OneSignal
+window.OneSignalDeferred = window.OneSignalDeferred || [];
+OneSignalDeferred.push(async function(OneSignal) {
+  await OneSignal.init({
+    appId: ONESIGNAL_APP_ID,
+    notifyButton: { enable: false },
+    allowLocalhostAsSecureOrigin: true,
+  });
+  
+  if (OneSignal.User.PushSubscription.optedIn) {
+    el.pushPill.textContent = 'Push: actief ✓';
+    el.pushHelp.textContent = '✅ Push-meldingen (OneSignal) actief!';
+  }
+});
 
 // Uniek apparaat-ID voor token beheer
 if (!prefs.deviceId) { prefs.deviceId = Math.random().toString(36).slice(2,12); savePrefs(); }
@@ -317,12 +333,12 @@ async function joinSession(code){
     if (state.lastAlertAt && state.lastAlertAt !== lastSeenAlert) {
       lastSeenAlert = state.lastAlertAt;
       beep();
-      showLocalNotification('🔔 Opgelet!', 'De host heeft een melding gestuurd.');
+      if(role !== 'host') alert('🔔 Opgelet! De host heeft een melding gestuurd.');
     }
     if (previousActiveId !== state.activeId && role !== 'host' && state.activeId) {
       const q = state.questions.find(x => x.id === state.activeId);
       beep();
-      showLocalNotification('❓ Nieuwe vraag!', q?.text || 'Open de app voor de volgende vraag.');
+      // Verwijder lokale notificatie, want we rely op de in-app rendering of externe OneSignal push
     }
   }, (err) => {
     console.error(err);
@@ -432,6 +448,11 @@ async function handleQuestionAction(action, id){
     state.activeId = q.id;
     state.reveal = false;
     await saveState();
+    
+    // Push sturen via OneSignal als we host zijn
+    if (role === 'host') {
+      sendOneSignalPush('❓ Nieuwe vraag!', q.text.slice(0,100));
+    }
     return;
   }
   if(action === 'done'){
@@ -508,6 +529,7 @@ el.sendAlertBtn.onclick = async ()=>{
   state.lastAlertAt = Date.now();
   await saveState();
   beep();
+  sendOneSignalPush('🔔 Opgelet!', 'De host heeft een melding gestuurd. Open de app!');
 };
 
 function updateCountdown(){
@@ -526,13 +548,7 @@ function updateCountdown(){
 }
 
 async function registerPWAStuff() {
-  if ('serviceWorker' in navigator) {
-    try {
-      swReg = await navigator.serviceWorker.register('./sw.js');
-    } catch (err) {
-      console.error('SW registratie mislukt', err);
-    }
-  }
+  // OneSignal regelt de Service Worker automatisch via OneSignalSDKWorker.js
 
   window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
@@ -552,52 +568,41 @@ async function registerPWAStuff() {
 }
 
 async function enablePush() {
-  if (!('Notification' in window)) {
-    el.pushPill.textContent = 'Push: niet ondersteund';
-    el.pushHelp.textContent = 'Deze browser ondersteunt geen notifications.';
+  if (!window.OneSignal) {
+    alert('OneSignal niet geladen. Ben je verbonden met internet?');
     return;
   }
-
-  const supported = await isSupported().catch(() => false);
-  if (!supported) {
-    el.pushPill.textContent = 'Push: beperkt';
-    el.pushHelp.textContent = 'Messaging wordt in deze browser niet volledig ondersteund.';
-    return;
-  }
-
-  if (VAPID_KEY.includes('PASTE_YOUR_VAPID_KEY_HERE')) {
+  
+  if (ONESIGNAL_APP_ID.includes('VUL_HIER')) {
     el.pushPill.textContent = 'Push: setup nodig';
-    el.pushHelp.textContent = 'Vul eerst je Firebase VAPID key in index.html.';
+    el.pushHelp.textContent = 'Vul eerst je OneSignal App ID in de index.html code.';
     return;
   }
 
-  try {
-    const permission = await Notification.requestPermission();
-    if (permission !== 'granted') {
-      el.pushPill.textContent = 'Push: geweigerd';
-      el.pushHelp.textContent = 'Meldingen zijn niet toegestaan.';
-      return;
+  OneSignalDeferred.push(async function(OneSignal) {
+    try {
+      await OneSignal.Slidedown.promptPush();
+      
+      const isPushSupported = OneSignal.Notifications.isPushSupported();
+      if (!isPushSupported) {
+         el.pushHelp.textContent = 'Je browser ondersteunt blijkbaar geen push-notificaties.';
+         return;
+      }
+      
+      const hasPermission = await OneSignal.Notifications.permission;
+      if (hasPermission) {
+        el.pushPill.textContent = 'Push: klaar ✓';
+        el.pushHelp.textContent = '✅ Push-meldingen actief! (Systeem-beheerder kan dit sturen zonder server)';
+      } else {
+        el.pushPill.textContent = 'Push: geweigerd';
+        el.pushHelp.textContent = 'Toestemming geweigerd. Zet dit aan in je browser.';
+      }
+    } catch (err) {
+      console.error(err);
+      el.pushPill.textContent = 'Push: fout';
+      el.pushHelp.textContent = 'Fout bij inschakelen van push: ' + err.message;
     }
-
-    const messaging = getMessaging(app);
-    const token = await getToken(messaging, {
-      vapidKey: VAPID_KEY,
-      serviceWorkerRegistration: swReg
-    });
-
-    prefs.pushToken = token;
-    savePrefs();
-
-    // Token opslaan in Firestore zodat de Cloud Function het kan gebruiken
-    await savePushToken(token);
-
-    el.pushPill.textContent = 'Push: klaar ✓';
-    el.pushHelp.textContent = '✅ Push-meldingen actief! Je ontvangt meldingen ook als de telefoon in je zak steekt.';
-  } catch (err) {
-    console.error(err);
-    el.pushPill.textContent = 'Push: fout';
-    el.pushHelp.textContent = 'Push setup mislukt: ' + (err.message || 'Kijk in console of VAPID key klopt.');
-  }
+  });
 }
 
 el.enablePushBtn.onclick = enablePush;
@@ -611,35 +616,39 @@ el.copyDeepLinkBtn.onclick = async () => {
   el.pushHelp.textContent = 'Deeplink gekopieerd.';
 };
 
-// Token opslaan in Firestore (subcollectie: sessions/{code}/tokens/{deviceId})
-async function savePushToken(token) {
-  if (!state.sessionCode || !token) return;
-  const tokenRef = doc(db, 'sessions', state.sessionCode, 'tokens', DEVICE_ID);
-  await setDoc(tokenRef, {
-    token,
-    deviceId: DEVICE_ID,
-    role,
-    updatedAt: Date.now()
-  });
-  console.log('Push token opgeslagen in Firestore voor sessie:', state.sessionCode);
-}
-
-// Lokale notificatie tonen als de app op de voorgrond staat
-function showLocalNotification(title, body) {
-  if (Notification.permission !== 'granted') return;
-  // Gebruik de service worker voor consistente weergave
-  if (swReg) {
-    swReg.showNotification(title, {
-      body,
-      icon: './icon-192.png',
-      badge: './icon-192.png',
-      vibrate: [200, 100, 200, 100, 400],
-      requireInteraction: true,
-      tag: 'vrijgezellen-vraag',
-      data: { url: location.href }
-    }).catch(() => new Notification(title, {body, icon:'./icon-192.png'}));
-  } else {
-    new Notification(title, {body, icon: './icon-192.png'});
+// Functie voor de Host: stuur een push-notificatie via de OneSignal REST API (geen server nodig)
+async function sendOneSignalPush(title, body) {
+  if (ONESIGNAL_REST_API_KEY.includes('VUL_HIER')) {
+    alert('Push notificatie kon niet verstuurd worden: Vul de OneSignal REST API Key in de code.');
+    return;
+  }
+  if (!state.sessionCode) return;
+  
+  try {
+    const payload = {
+      app_id: ONESIGNAL_APP_ID,
+      included_segments: ['Subscribed Users'], // Stuur naar iedereen in de app
+      headings: { "en": title, "nl": title },
+      contents: { "en": body, "nl": body },
+      url: location.origin + location.pathname + "?code=" + state.sessionCode,
+    };
+    
+    const response = await fetch('https://onesignal.com/api/v1/notifications', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json; charset=utf-8',
+        'Authorization': `Basic ${ONESIGNAL_REST_API_KEY}`
+      },
+      body: JSON.stringify(payload)
+    });
+    
+    if (response.ok) {
+      console.log('✅ OneSignal push verstuurd!', await response.json());
+    } else {
+      console.error('❌ OneSignal API error:', await response.text());
+    }
+  } catch (err) {
+    console.error('❌ Netwerkfout bij pushen via OneSignal:', err);
   }
 }
 
@@ -693,10 +702,6 @@ registerPWAStuff();
 if (prefs.sessionCode) {
   joinSession(prefs.sessionCode).then(async () => {
     el.rolePicker.classList.add('hidden');
-    // Herregistreer push token bij herstart sessie
-    if (prefs.pushToken) {
-      await savePushToken(prefs.pushToken).catch(console.error);
-    }
   }).catch((err) => {
     console.error(err);
     el.syncPill.textContent = 'Sync: fout';
